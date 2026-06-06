@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Order Confirmed — ThreadVeda{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Animated checkmark ── */
+  @keyframes checkScale {
+    0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+    60%  { transform: scale(1.15) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  @keyframes checkRing {
+    0%   { stroke-dashoffset: 200; opacity: 0; }
+    50%  { opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 1; }
+  }
+  @keyframes checkMark {
+    0%   { stroke-dashoffset: 50; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+    50%      { box-shadow: 0 0 30px 10px rgba(34, 197, 94, 0.15); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .check-container {
+    animation: checkScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+  }
+  .check-ring {
+    stroke-dasharray: 200;
+    animation: checkRing 0.8s ease-out 0.4s both;
+  }
+  .check-mark {
+    stroke-dasharray: 50;
+    animation: checkMark 0.5s ease-out 0.9s both;
+  }
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite 1.2s;
+  }
+  .fade-up {
+    animation: fadeUp 0.6s ease-out both;
+  }
+  .fade-up-1 { animation-delay: 0.8s; }
+  .fade-up-2 { animation-delay: 1.0s; }
+  .fade-up-3 { animation-delay: 1.2s; }
+  .fade-up-4 { animation-delay: 1.4s; }
+  .fade-up-5 { animation-delay: 1.6s; }
+  .fade-in-late {
+    animation: fadeIn 0.5s ease-out 1.8s both;
+  }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Confetti Canvas -->
+<canvas id="confetti-canvas"></canvas>
+
+<section class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-3xl">
+
+    <!-- ═══ Success State ═══ -->
+    <div class="text-center mb-10">
+      <!-- Animated Checkmark -->
+      <div class="check-container inline-flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-green-500/10 pulse-glow mb-6">
+        <svg class="w-20 h-20 sm:w-24 sm:h-24" viewBox="0 0 80 80" fill="none">
+          <circle class="check-ring" cx="40" cy="40" r="36" stroke="#22c55e" stroke-width="3" fill="none" />
+          <path class="check-mark" d="M24 42 L34 52 L56 28" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        </svg>
+      </div>
+
+      <h1 class="fade-up fade-up-1 font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3">
+        Order Placed Successfully!
+      </h1>
+      <p class="fade-up fade-up-2 text-lg sm:text-xl text-gray-300 mb-2">
+        Thank you for your purchase
+      </p>
+      <p class="fade-up fade-up-3 text-brand-400 text-lg font-semibold tracking-wide">
+        Order #{{ order.order_number }}
+      </p>
+    </div>
+
+    <!-- ═══ Order Summary Card ═══ -->
+    <div class="fade-up fade-up-4 glass rounded-2xl overflow-hidden mb-8">
+
+      <!-- Header -->
+      <div class="bg-white/[0.03] border-b border-white/5 px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 class="font-display text-xl font-semibold text-white flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-brand-400"></i>
+            Order Summary
+          </h2>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <span class="text-gray-400">
+            <i class="fa-regular fa-calendar mr-1"></i>
+            {{ order.created_at|date:"d M Y, h:i A" }}
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold
+            {% if order.payment_status == 'paid' %}
+              bg-green-500/15 text-green-400 border border-green-500/20
+            {% elif order.payment_status == 'pending' %}
+              bg-yellow-500/15 text-yellow-400 border border-yellow-500/20
+            {% else %}
+              bg-red-500/15 text-red-400 border border-red-500/20
+            {% endif %}">
+            <span class="w-1.5 h-1.5 rounded-full
+              {% if order.payment_status == 'paid' %}bg-green-400
+              {% elif order.payment_status == 'pending' %}bg-yellow-400
+              {% else %}bg-red-400{% endif %}"></span>
+            {{ order.payment_status|title }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="px-6 py-5">
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Items Ordered</h3>
+
+        <div class="space-y-4">
+          {% for item in order.items.all %}
+          <div class="flex items-start gap-4 {% if not forloop.last %}pb-4 border-b border-white/5{% endif %}">
+            <!-- Item icon -->
+            <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-surface-700 flex items-center justify-center text-brand-400">
+              <i class="fa-solid fa-shirt text-lg"></i>
+            </div>
+
+            <!-- Item details -->
+            <div class="flex-1 min-w-0">
+              <h4 class="text-white font-medium truncate">{{ item.product_name }}</h4>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-400">
+                <span>Qty: {{ item.quantity }}</span>
+                {% if item.size %}
+                <span class="flex items-center gap-1">
+                  <i class="fa-solid fa-ruler-horizontal text-[10px]"></i> {{ item.size }}
+                </span>
+                {% endif %}
+                {% if item.color %}
+                <span class="flex items-center gap-1">
+                  <i class="fa-solid fa-palette text-[10px]"></i> {{ item.color }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Item price -->
+            <div class="text-right flex-shrink-0">
+              <p class="text-white font-semibold">₹{{ item.total_price|floatformat:0|intcomma }}</p>
+              {% if item.quantity > 1 %}
+              <p class="text-xs text-gray-500 mt-0.5">₹{{ item.price|floatformat:0|intcomma }} each</p>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Totals -->
+      <div class="bg-white/[0.02] border-t border-white/5 px-6 py-5">
+        <div class="space-y-2.5 max-w-xs ml-auto">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-400">Subtotal</span>
+            <span class="text-gray-200">₹{{ order.subtotal|floatformat:0|intcomma }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-400">Shipping</span>
+            {% if order.shipping_cost %}
+            <span class="text-gray-200">₹{{ order.shipping_cost|floatformat:0|intcomma }}</span>
+            {% else %}
+            <span class="text-green-400 font-medium">Free</span>
+            {% endif %}
+          </div>
+          {% if order.tax %}
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-400">Tax</span>
+            <span class="text-gray-200">₹{{ order.tax|floatformat:0|intcomma }}</span>
+          </div>
+          {% endif %}
+          <div class="border-t border-white/10 pt-3 flex justify-between">
+            <span class="text-white font-semibold">Total</span>
+            <span class="text-xl font-bold text-brand-400">₹{{ order.total|floatformat:0|intcomma }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipping Address -->
+      <div class="border-t border-white/5 px-6 py-5">
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-location-dot text-brand-400"></i>
+          Shipping Address
+        </h3>
+        <div class="bg-surface-700/50 rounded-xl px-4 py-3.5 text-sm text-gray-300 leading-relaxed">
+          <p class="text-white font-medium">{{ order.full_name }}</p>
+          <p>{{ order.address_line1 }}</p>
+          {% if order.address_line2 %}
+          <p>{{ order.address_line2 }}</p>
+          {% endif %}
+          <p>{{ order.city }}{% if order.state %}, {{ order.state }}{% endif %} — {{ order.zip_code }}</p>
+          {% if order.phone %}
+          <p class="mt-1.5 text-gray-400">
+            <i class="fa-solid fa-phone text-xs mr-1"></i> {{ order.phone }}
+          </p>
+          {% endif %}
+          {% if order.email %}
+          <p class="text-gray-400">
+            <i class="fa-solid fa-envelope text-xs mr-1"></i> {{ order.email }}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Action Buttons ═══ -->
+    <div class="fade-up fade-up-5 flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="{% url 'store:order_detail' order_number=order.order_number %}"
+         class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30">
+        <i class="fa-solid fa-eye"></i>
+        View Order Details
+      </a>
+      <a href="{% url 'store:product_list' %}"
+         class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-gray-200 font-semibold px-8 py-3.5 rounded-xl hover:bg-white/10 hover:text-white transition-all">
+        <i class="fa-solid fa-bag-shopping"></i>
+        Continue Shopping
+      </a>
+    </div>
+
+    <!-- Email Notice -->
+    <p class="fade-in-late text-center text-sm text-gray-500 mt-8">
+      <i class="fa-solid fa-envelope mr-1"></i>
+      A confirmation email has been sent to <span class="text-gray-300">{{ order.email }}</span>
+    </p>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  /* ══════════════════════════════════════════
+     Canvas-based Confetti Animation
+     Runs for ~3 seconds on page load
+     ══════════════════════════════════════════ */
+
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Confetti particle colors (brand golds, greens, whites, warm tones)
+  const palette = [
+    '#e6a243', '#d4882a', '#b86c1f',   // brand golds
+    '#22c55e', '#4ade80', '#86efac',    // greens (success)
+    '#fbbf24', '#f59e0b',               // amber
+    '#f472b6', '#c084fc',               // pinks & purples
+    '#60a5fa', '#38bdf8',               // blues
+    '#ffffff', '#e5e7eb',               // whites
+  ];
+
+  // Particle shapes: rect, circle, strip
+  const SHAPES = ['rect', 'circle', 'strip'];
+
+  class Particle {
+    constructor() {
+      this.reset(true);
+    }
+
+    reset(initial) {
+      this.x = Math.random() * W;
+      this.y = initial ? Math.random() * -H : -10 - Math.random() * 40;
+      this.w = 4 + Math.random() * 6;
+      this.h = 3 + Math.random() * 4;
+      this.color = palette[Math.floor(Math.random() * palette.length)];
+      this.shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      this.rotation = Math.random() * Math.PI * 2;
+      this.rotSpeed = (Math.random() - 0.5) * 0.15;
+      this.vx = (Math.random() - 0.5) * 3;
+      this.vy = 2 + Math.random() * 4;
+      this.gravity = 0.02 + Math.random() * 0.02;
+      this.wobble = Math.random() * Math.PI * 2;
+      this.wobbleSpeed = 0.03 + Math.random() * 0.05;
+      this.opacity = 1;
+      this.fade = 0;
+    }
+
+    update() {
+      this.vy += this.gravity;
+      this.x += this.vx + Math.sin(this.wobble) * 0.5;
+      this.y += this.vy;
+      this.rotation += this.rotSpeed;
+      this.wobble += this.wobbleSpeed;
+      this.opacity -= this.fade;
+
+      return this.y < H + 20 && this.opacity > 0;
+    }
+
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation);
+      ctx.globalAlpha = Math.max(0, this.opacity);
+      ctx.fillStyle = this.color;
+
+      if (this.shape === 'rect') {
+        ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
+      } else if (this.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, this.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // strip / ribbon
+        ctx.fillRect(-this.w / 2, -1, this.w, 2.5);
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // Create particles
+  const PARTICLE_COUNT = 200;
+  const particles = [];
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push(new Particle());
+  }
+
+  // Animation timing
+  const START_TIME = performance.now();
+  const BURST_DURATION = 1500;   // emit new particles for 1.5s
+  const TOTAL_DURATION = 4000;   // entire animation ~4s (includes fade-out)
+  let animId;
+
+  function animate(now) {
+    const elapsed = now - START_TIME;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // After burst period, start fading particles
+    const isFading = elapsed > BURST_DURATION;
+
+    let alive = 0;
+    for (const p of particles) {
+      if (isFading && p.fade === 0) {
+        p.fade = 0.005 + Math.random() * 0.008;
+      }
+
+      if (p.update()) {
+        p.draw();
+        alive++;
+      }
+    }
+
+    // Stop when all particles are gone or max duration exceeded
+    if (alive > 0 && elapsed < TOTAL_DURATION + 2000) {
+      animId = requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0, 0, W, H);
+      canvas.remove();
+    }
+  }
+
+  // Launch
+  animId = requestAnimationFrame(animate);
+
+  // Safety cleanup after 6 seconds
+  setTimeout(() => {
+    if (animId) cancelAnimationFrame(animId);
+    if (canvas && canvas.parentNode) {
+      ctx.clearRect(0, 0, W, H);
+      canvas.remove();
+    }
+  }, 6000);
+})();
+</script>
+{% endblock %}

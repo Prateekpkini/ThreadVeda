@@ -20,7 +20,7 @@ def register_view(request):
             UserProfile.objects.create(user=user)
             # Auto login
             login(request, user)
-            messages.success(request, f'Welcome to Luxe Garments, {user.first_name}!')
+            messages.success(request, f'Welcome to ThreadVeda, {user.first_name}!')
             return redirect('store:home')
     else:
         form = RegistrationForm()

@@ -15,6 +15,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
 
 # Admin site customization
-admin.site.site_header = 'Luxe Garments Admin'
-admin.site.site_title = 'Luxe Garments'
+admin.site.site_header = 'ThreadVeda Admin'
+admin.site.site_title = 'ThreadVeda'
 admin.site.index_title = 'Store Management'

@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Payment — Luxe Garments{% endblock %}
+
+{% block extra_head %}
+<style>
+  .form-input {
+    width: 100%;
+    background: #252525;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #fff;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input::placeholder { color: #6b7280; }
+  .form-input:focus {
+    outline: none;
+    border-color: #e6a243;
+    box-shadow: 0 0 0 2px rgba(230,162,67,0.15);
+  }
+  .form-input.is-invalid { border-color: #ef4444; }
+
+  /* Payment method card */
+  .payment-option {
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .payment-option:hover {
+    border-color: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+  }
+  .payment-option.active {
+    border-color: #e6a243;
+    background: rgba(230,162,67,0.08);
+    box-shadow: 0 0 0 1px rgba(230,162,67,0.3);
+  }
+  .payment-option.active .option-dot {
+    background: #e6a243;
+    box-shadow: 0 0 0 3px rgba(230,162,67,0.25);
+  }
+
+  /* Section reveal animation */
+  .payment-section {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+  }
+  .payment-section.visible {
+    max-height: 600px;
+    opacity: 1;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-8 sm:py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- ═══════ Page Header & Step Indicator ═══════ -->
+    <div class="mb-10">
+      <h1 class="font-display text-3xl sm:text-4xl font-bold text-white mb-6">Payment</h1>
+
+      <!-- Step Indicator -->
+      <div class="flex items-center gap-0 text-sm font-medium">
+        <!-- Step 1: Shipping ✓ -->
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-check"></i>
+          </span>
+          <span class="text-green-400 hidden sm:inline">Shipping</span>
+        </div>
+
+        <div class="w-8 sm:w-12 h-px bg-green-500/40 mx-1"></div>
+
+        <!-- Step 2: Payment (active) -->
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold">2</span>
+          <span class="text-brand-400 font-semibold hidden sm:inline">Payment</span>
+        </div>
+
+        <div class="w-8 sm:w-12 h-px bg-white/10 mx-1"></div>
+
+        <!-- Step 3: Confirmation -->
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-surface-600 text-gray-500 flex items-center justify-center text-xs font-bold border border-white/10">3</span>
+          <span class="text-gray-500 hidden sm:inline">Confirmation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ Main Form ═══════ -->
+    <form method="POST" id="payment-form" novalidate>
+      {% csrf_token %}
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- ═══════════════ LEFT COLUMN — Payment Methods ═══════════════ -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Payment Method Selection -->
+          <div class="glass rounded-2xl p-6 sm:p-8">
+            <h2 class="text-lg font-semibold text-white mb-1">Choose Payment Method</h2>
+            <p class="text-gray-400 text-sm mb-6">All transactions are secure and encrypted</p>
+
+            <!-- Hidden Django radio field -->
+            <div class="hidden">{{ form.payment_method }}</div>
+
+            <!-- Clickable Payment Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+              <!-- Credit/Debit Card -->
+              <label class="payment-option rounded-xl border border-white/10 bg-surface-700/50 p-5 flex flex-col items-center gap-3 text-center"
+                     data-method="card" onclick="selectPayment('card')">
+                <div class="w-12 h-12 rounded-full bg-blue-500/15 flex items-center justify-center">
+                  <i class="fa-solid fa-credit-card text-blue-400 text-lg"></i>
+                </div>
+                <div>
+                  <p class="text-white font-medium text-sm">Credit / Debit Card</p>
+                  <p class="text-gray-500 text-xs mt-0.5">Visa, Mastercard, Amex</p>
+                </div>
+                <span class="option-dot w-4 h-4 rounded-full border-2 border-white/20 bg-transparent mt-auto transition-all"></span>
+              </label>
+
+              <!-- UPI -->
+              <label class="payment-option rounded-xl border border-white/10 bg-surface-700/50 p-5 flex flex-col items-center gap-3 text-center"
+                     data-method="upi" onclick="selectPayment('upi')">
+                <div class="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center">
+                  <i class="fa-solid fa-mobile-screen-button text-green-400 text-lg"></i>
+                </div>
+                <div>
+                  <p class="text-white font-medium text-sm">UPI</p>
+                  <p class="text-gray-500 text-xs mt-0.5">GPay, PhonePe, Paytm</p>
+                </div>
+                <span class="option-dot w-4 h-4 rounded-full border-2 border-white/20 bg-transparent mt-auto transition-all"></span>
+              </label>
+
+              <!-- Cash on Delivery -->
+              <label class="payment-option rounded-xl border border-white/10 bg-surface-700/50 p-5 flex flex-col items-center gap-3 text-center"
+                     data-method="cod" onclick="selectPayment('cod')">
+                <div class="w-12 h-12 rounded-full bg-amber-500/15 flex items-center justify-center">
+                  <i class="fa-solid fa-money-bill-wave text-amber-400 text-lg"></i>
+                </div>
+                <div>
+                  <p class="text-white font-medium text-sm">Cash on Delivery</p>
+                  <p class="text-gray-500 text-xs mt-0.5">Pay when you receive</p>
+                </div>
+                <span class="option-dot w-4 h-4 rounded-full border-2 border-white/20 bg-transparent mt-auto transition-all"></span>
+              </label>
+            </div>
+
+            {% if form.payment_method.errors %}
+            <p class="text-red-400 text-sm mt-3">
+              <i class="fa-solid fa-circle-exclamation mr-1"></i>{{ form.payment_method.errors.0 }}
+            </p>
+            {% endif %}
+          </div>
+
+          <!-- ══════ Card Details Section ══════ -->
+          <div id="section-card" class="payment-section">
+            <div class="glass rounded-2xl p-6 sm:p-8">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-white">
+                  <i class="fa-solid fa-lock text-brand-400 text-sm mr-2"></i>Card Details
+                </h3>
+                <div class="flex items-center gap-2 text-gray-500">
+                  <i class="fa-brands fa-cc-visa text-xl hover:text-blue-400 transition"></i>
+                  <i class="fa-brands fa-cc-mastercard text-xl hover:text-red-400 transition"></i>
+                  <i class="fa-brands fa-cc-amex text-xl hover:text-blue-300 transition"></i>
+                </div>
+              </div>
+
+              <div class="space-y-5">
+                <!-- Card Number -->
+                <div>
+                  <label for="id_card_number" class="block text-sm font-medium text-gray-300 mb-2">Card Number</label>
+                  <div class="relative">
+                    <input type="text" name="card_number" id="id_card_number"
+                           value="{{ form.card_number.value|default_if_none:'' }}"
+                           placeholder="1234 5678 9012 3456"
+                           maxlength="19"
+                           inputmode="numeric"
+                           autocomplete="cc-number"
+                           class="form-input pl-12 {% if form.card_number.errors %}is-invalid{% endif %}" />
+                    <span id="card-brand-icon" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">
+                      <i class="fa-solid fa-credit-card"></i>
+                    </span>
+                  </div>
+                  {% if form.card_number.errors %}
+                  <p class="text-red-400 text-xs mt-1.5"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ form.card_number.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Cardholder Name -->
+                <div>
+                  <label for="id_card_name" class="block text-sm font-medium text-gray-300 mb-2">Cardholder Name</label>
+                  <input type="text" name="card_name" id="id_card_name"
+                         value="{{ form.card_name.value|default_if_none:'' }}"
+                         placeholder="Name on card"
+                         autocomplete="cc-name"
+                         class="form-input {% if form.card_name.errors %}is-invalid{% endif %}" />
+                  {% if form.card_name.errors %}
+                  <p class="text-red-400 text-xs mt-1.5"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ form.card_name.errors.0 }}</p>
+                  {% endif %}
+                </div>
+
+                <!-- Expiry & CVV -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label for="id_expiry" class="block text-sm font-medium text-gray-300 mb-2">Expiry Date</label>
+                    <input type="text" name="expiry" id="id_expiry"
+                           value="{{ form.expiry.value|default_if_none:'' }}"
+                           placeholder="MM / YY"
+                           maxlength="7"
+                           inputmode="numeric"
+                           autocomplete="cc-exp"
+                           class="form-input {% if form.expiry.errors %}is-invalid{% endif %}" />
+                    {% if form.expiry.errors %}
+                    <p class="text-red-400 text-xs mt-1.5"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ form.expiry.errors.0 }}</p>
+                    {% endif %}
+                  </div>
+                  <div>
+                    <label for="id_cvv" class="block text-sm font-medium text-gray-300 mb-2">CVV</label>
+                    <div class="relative">
+                      <input type="password" name="cvv" id="id_cvv"
+                             value="{{ form.cvv.value|default_if_none:'' }}"
+                             placeholder="•••"
+                             maxlength="4"
+                             inputmode="numeric"
+                             autocomplete="cc-csc"
+                             class="form-input pr-10 {% if form.cvv.errors %}is-invalid{% endif %}" />
+                      <button type="button" onclick="toggleCvv()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition">
+                        <i class="fa-solid fa-eye text-sm" id="cvv-eye"></i>
+                      </button>
+                    </div>
+                    {% if form.cvv.errors %}
+                    <p class="text-red-400 text-xs mt-1.5"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ form.cvv.errors.0 }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════ UPI Section ══════ -->
+          <div id="section-upi" class="payment-section">
+            <div class="glass rounded-2xl p-6 sm:p-8">
+              <h3 class="text-lg font-semibold text-white mb-6">
+                <i class="fa-solid fa-mobile-screen-button text-green-400 text-sm mr-2"></i>UPI Payment
+              </h3>
+
+              <div>
+                <label for="id_upi_id" class="block text-sm font-medium text-gray-300 mb-2">UPI ID</label>
+                <div class="relative">
+                  <input type="text" name="upi_id" id="id_upi_id"
+                         value="{{ form.upi_id.value|default_if_none:'' }}"
+                         placeholder="yourname@upi"
+                         class="form-input pl-12 {% if form.upi_id.errors %}is-invalid{% endif %}" />
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                    <i class="fa-solid fa-at"></i>
+                  </span>
+                </div>
+                {% if form.upi_id.errors %}
+                <p class="text-red-400 text-xs mt-1.5"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ form.upi_id.errors.0 }}</p>
+                {% endif %}
+                <p class="text-gray-500 text-xs mt-2">
+                  <i class="fa-solid fa-shield-halved mr-1"></i>We'll send a payment request to your UPI app.
+                </p>
+              </div>
+
+              <!-- UPI app icons -->
+              <div class="flex items-center gap-4 mt-5 pt-5 border-t border-white/5">
+                <span class="text-xs text-gray-500">Supported:</span>
+                <div class="flex items-center gap-3">
+                  <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 text-xs font-bold">G</span>
+                  <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 text-xs font-bold">P</span>
+                  <span class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 text-xs font-bold">₹</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══════ COD Section ══════ -->
+          <div id="section-cod" class="payment-section">
+            <div class="glass rounded-2xl p-6 sm:p-8">
+              <h3 class="text-lg font-semibold text-white mb-4">
+                <i class="fa-solid fa-money-bill-wave text-amber-400 text-sm mr-2"></i>Cash on Delivery
+              </h3>
+
+              <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
+                <div class="flex gap-4">
+                  <span class="text-amber-400 mt-0.5">
+                    <i class="fa-solid fa-info-circle text-lg"></i>
+                  </span>
+                  <div>
+                    <p class="text-amber-200 text-sm font-medium mb-1">Pay with cash when your order arrives</p>
+                    <ul class="text-amber-200/70 text-xs space-y-1">
+                      <li><i class="fa-solid fa-check mr-1.5 text-amber-400/60"></i>Please keep exact change ready for the delivery partner</li>
+                      <li><i class="fa-solid fa-check mr-1.5 text-amber-400/60"></i>Available for orders under ₹10,000</li>
+                      <li><i class="fa-solid fa-check mr-1.5 text-amber-400/60"></i>Inspect your order before making payment</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Note -->
+          <div class="flex items-center gap-3 text-xs text-gray-500 px-2">
+            <i class="fa-solid fa-shield-halved text-green-500"></i>
+            <span>Your payment information is encrypted with 256-bit SSL security. We never store your card details.</span>
+          </div>
+
+        </div>
+
+        <!-- ═══════════════ RIGHT COLUMN — Order Summary ═══════════════ -->
+        <div class="lg:col-span-1">
+          <div class="glass rounded-2xl p-6 sm:p-8 lg:sticky lg:top-28">
+
+            <h2 class="text-lg font-semibold text-white mb-6">Order Summary</h2>
+
+            <!-- Order Number -->
+            <div class="flex items-center justify-between py-3 border-b border-white/5">
+              <span class="text-gray-400 text-sm">Order</span>
+              <span class="text-white text-sm font-mono">#{{ order.order_number }}</span>
+            </div>
+
+            <!-- Item Count -->
+            <div class="flex items-center justify-between py-3 border-b border-white/5">
+              <span class="text-gray-400 text-sm">Items</span>
+              <span class="text-gray-200 text-sm">{{ order.item_count }} item{{ order.item_count|pluralize }}</span>
+            </div>
+
+            <!-- Subtotal -->
+            <div class="flex items-center justify-between py-3 border-b border-white/5">
+              <span class="text-gray-400 text-sm">Subtotal</span>
+              <span class="text-gray-200 text-sm">₹{{ order.subtotal|floatformat:0|intcomma }}</span>
+            </div>
+
+            <!-- Shipping -->
+            <div class="flex items-center justify-between py-3 border-b border-white/5">
+              <span class="text-gray-400 text-sm">Shipping</span>
+              {% if order.shipping_cost > 0 %}
+              <span class="text-gray-200 text-sm">₹{{ order.shipping_cost|floatformat:0|intcomma }}</span>
+              {% else %}
+              <span class="text-green-400 text-sm font-medium">Free</span>
+              {% endif %}
+            </div>
+
+            <!-- Tax -->
+            {% if order.tax > 0 %}
+            <div class="flex items-center justify-between py-3 border-b border-white/5">
+              <span class="text-gray-400 text-sm">Tax</span>
+              <span class="text-gray-200 text-sm">₹{{ order.tax|floatformat:0|intcomma }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Total -->
+            <div class="flex items-center justify-between pt-5 pb-2">
+              <span class="text-white font-semibold">Total</span>
+              <span class="text-2xl font-bold text-brand-400 font-display">₹{{ order.total|floatformat:0|intcomma }}</span>
+            </div>
+
+            <!-- Pay Now Button -->
+            <button type="submit" id="pay-btn"
+                    class="w-full mt-6 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold px-6 py-4 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed">
+              <i class="fa-solid fa-lock text-sm"></i>
+              <span id="pay-btn-text">Pay ₹{{ order.total|floatformat:0|intcomma }}</span>
+            </button>
+
+            <p class="text-center text-xs text-gray-500 mt-4">
+              By placing your order, you agree to our
+              <a href="#" class="text-brand-400 hover:underline">Terms of Service</a>
+            </p>
+
+          </div>
+        </div>
+
+      </div>
+    </form>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  /* ── References ── */
+  const radioInputs   = document.querySelectorAll('input[name="payment_method"]');
+  const optionCards   = document.querySelectorAll('.payment-option');
+  const sectionCard   = document.getElementById('section-card');
+  const sectionUpi    = document.getElementById('section-upi');
+  const sectionCod    = document.getElementById('section-cod');
+  const cardNumberEl  = document.getElementById('id_card_number');
+  const expiryEl      = document.getElementById('id_expiry');
+  const cvvEl         = document.getElementById('id_cvv');
+  const cardBrandIcon = document.getElementById('card-brand-icon');
+  const payBtnText    = document.getElementById('pay-btn-text');
+
+  const sections = { card: sectionCard, upi: sectionUpi, cod: sectionCod };
+
+  /* ── Select a payment method ── */
+  window.selectPayment = function(method) {
+    // Update Django radio input
+    radioInputs.forEach(r => {
+      r.checked = (r.value === method);
+    });
+
+    // Update visual cards
+    optionCards.forEach(card => {
+      card.classList.toggle('active', card.dataset.method === method);
+    });
+
+    // Show/hide detail sections
+    Object.entries(sections).forEach(([key, section]) => {
+      if (key === method) {
+        section.classList.add('visible');
+        section.style.marginTop = '0';
+      } else {
+        section.classList.remove('visible');
+      }
+    });
+
+    // Update pay button text
+    const labels = { card: 'Pay', upi: 'Pay via UPI', cod: 'Place COD Order' };
+    const total = '₹{{ order.total|floatformat:0|intcomma }}';
+    payBtnText.innerHTML = `${labels[method]} ${total}`;
+  };
+
+  /* ── Initialize from form state ── */
+  (function initPayment() {
+    const checked = document.querySelector('input[name="payment_method"]:checked');
+    if (checked) {
+      selectPayment(checked.value);
+    }
+  })();
+
+  /* ── Card Number Formatting (spaces every 4 digits) ── */
+  if (cardNumberEl) {
+    cardNumberEl.addEventListener('input', function(e) {
+      let value = this.value.replace(/\D/g, '');
+      if (value.length > 16) value = value.slice(0, 16);
+
+      // Format with spaces every 4 digits
+      let formatted = '';
+      for (let i = 0; i < value.length; i++) {
+        if (i > 0 && i % 4 === 0) formatted += ' ';
+        formatted += value[i];
+      }
+      this.value = formatted;
+
+      // Detect card brand
+      updateCardBrand(value);
+    });
+  }
+
+  /* ── Card Brand Detection ── */
+  function updateCardBrand(number) {
+    let icon = 'fa-solid fa-credit-card';
+    let color = 'text-gray-500';
+
+    if (/^4/.test(number)) {
+      icon = 'fa-brands fa-cc-visa';
+      color = 'text-blue-400';
+    } else if (/^5[1-5]/.test(number) || /^2[2-7]/.test(number)) {
+      icon = 'fa-brands fa-cc-mastercard';
+      color = 'text-red-400';
+    } else if (/^3[47]/.test(number)) {
+      icon = 'fa-brands fa-cc-amex';
+      color = 'text-blue-300';
+    } else if (/^6(?:011|5)/.test(number)) {
+      icon = 'fa-brands fa-cc-discover';
+      color = 'text-orange-400';
+    }
+
+    cardBrandIcon.innerHTML = `<i class="${icon} ${color}"></i>`;
+  }
+
+  /* ── Expiry Auto-Formatting (MM / YY) ── */
+  if (expiryEl) {
+    expiryEl.addEventListener('input', function(e) {
+      let value = this.value.replace(/\D/g, '');
+      if (value.length > 4) value = value.slice(0, 4);
+
+      // Clamp month to 01-12
+      if (value.length >= 2) {
+        let month = parseInt(value.slice(0, 2), 10);
+        if (month > 12) month = 12;
+        if (month < 1 && value.slice(0, 2) !== '0' && value.slice(0, 2) !== '00') month = 1;
+        value = String(month).padStart(2, '0') + value.slice(2);
+      }
+
+      if (value.length >= 3) {
+        this.value = value.slice(0, 2) + ' / ' + value.slice(2);
+      } else {
+        this.value = value;
+      }
+    });
+
+    // Handle backspace over the separator
+    expiryEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && this.value.length === 5) {
+        // Cursor is after " / ", remove the month's second digit
+        this.value = this.value.slice(0, 1);
+        e.preventDefault();
+      }
+    });
+  }
+
+  /* ── CVV Toggle Visibility ── */
+  window.toggleCvv = function() {
+    const input = cvvEl;
+    const eye   = document.getElementById('cvv-eye');
+    if (input.type === 'password') {
+      input.type = 'text';
+      eye.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      input.type = 'password';
+      eye.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  };
+
+  /* ── Restrict CVV to numeric ── */
+  if (cvvEl) {
+    cvvEl.addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '');
+    });
+  }
+
+  /* ── Prevent double-submit ── */
+  document.getElementById('payment-form').addEventListener('submit', function() {
+    const btn = document.getElementById('pay-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Processing…';
+  });
+
+})();
+</script>
+{% endblock %}

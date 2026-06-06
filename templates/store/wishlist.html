@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}My Wishlist — Luxe Garments{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════  WISHLIST HEADER  ═══════════════════ -->
+<section class="bg-surface-800/50 border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+      <a href="{% url 'store:home' %}" class="hover:text-brand-400 transition">Home</a>
+      <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      <span class="text-gray-300">Wishlist</span>
+    </nav>
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="font-display text-3xl sm:text-4xl font-bold text-white">My Wishlist</h1>
+        <p class="text-gray-400 mt-2" id="wishlist-count-text">
+          {% if wishlist_items %}
+            <span id="wishlist-count">{{ wishlist_items|length }}</span> item{{ wishlist_items|length|pluralize }} saved
+          {% else %}
+            Your wishlist is empty
+          {% endif %}
+        </p>
+      </div>
+      {% if wishlist_items %}
+      <a href="{% url 'store:product_list' %}"
+         class="hidden sm:inline-flex items-center gap-2 text-sm text-brand-400 hover:text-brand-300 font-medium transition">
+        Continue Shopping <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════  WISHLIST CONTENT  ═══════════════════ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+
+  {% if wishlist_items %}
+  <!-- Wishlist product grid -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" id="wishlist-grid">
+    {% for item in wishlist_items %}
+    <div class="group glass rounded-2xl overflow-hidden hover:border-brand-500/20 transition-all duration-300 wishlist-card"
+         id="wishlist-item-{{ item.product.id }}" data-product-id="{{ item.product.id }}">
+      <!-- Image -->
+      <a href="{{ item.product.get_absolute_url }}" class="block relative aspect-[3/4] bg-surface-700 overflow-hidden">
+        {% if item.product.primary_image %}
+        <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}"
+             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+        {% else %}
+        <div class="w-full h-full flex items-center justify-center text-gray-600">
+          <i class="fa-solid fa-shirt text-4xl"></i>
+        </div>
+        {% endif %}
+        {% if item.product.discount_percent %}
+        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-red-500 text-white text-[11px] font-bold">-{{ item.product.discount_percent }}%</span>
+        {% endif %}
+        {% if item.product.is_new_arrival %}
+        <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-brand-500 text-white text-[11px] font-bold">NEW</span>
+        {% endif %}
+        {% if not item.product.in_stock %}
+        <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <span class="px-4 py-2 rounded-lg bg-surface-900/80 text-gray-300 text-sm font-semibold">Out of Stock</span>
+        </div>
+        {% endif %}
+      </a>
+
+      <!-- Info -->
+      <div class="p-4">
+        <p class="text-[11px] text-gray-500 uppercase tracking-wider mb-1">{{ item.product.category.name }}</p>
+        <a href="{{ item.product.get_absolute_url }}" class="block text-sm font-semibold text-white hover:text-brand-300 transition truncate">{{ item.product.name }}</a>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-brand-400 font-bold">₹{{ item.product.effective_price|floatformat:0|intcomma }}</span>
+          {% if item.product.discount_price %}
+          <span class="text-xs text-gray-500 line-through">₹{{ item.product.price|floatformat:0|intcomma }}</span>
+          {% endif %}
+        </div>
+        {% if item.product.avg_rating %}
+        <div class="flex items-center gap-1 mt-2">
+          {% for i in "12345" %}
+            {% if forloop.counter <= item.product.avg_rating %}
+            <i class="fa-solid fa-star text-[10px] text-brand-400"></i>
+            {% else %}
+            <i class="fa-solid fa-star text-[10px] text-gray-600"></i>
+            {% endif %}
+          {% endfor %}
+          <span class="text-[11px] text-gray-500 ml-1">({{ item.product.review_count }})</span>
+        </div>
+        {% endif %}
+
+        <!-- Action buttons -->
+        <div class="flex gap-2 mt-4">
+          {% if item.product.in_stock %}
+          <a href="{{ item.product.get_absolute_url }}"
+             class="flex-1 inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-brand-500 to-brand-600 text-white text-xs font-semibold px-3 py-2.5 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all">
+            <i class="fa-solid fa-bag-shopping text-[10px]"></i>
+            <span>Add to Cart</span>
+          </a>
+          {% else %}
+          <span class="flex-1 inline-flex items-center justify-center gap-1.5 bg-surface-600 text-gray-500 text-xs font-semibold px-3 py-2.5 rounded-xl cursor-not-allowed">
+            <i class="fa-solid fa-ban text-[10px]"></i>
+            <span>Unavailable</span>
+          </span>
+          {% endif %}
+          <button onclick="removeFromWishlist({{ item.product.id }}, this)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
+                  title="Remove from Wishlist" aria-label="Remove from Wishlist">
+            <i class="fa-solid fa-heart-crack text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+
+  <!-- ═══════════════════  EMPTY STATE  ═══════════════════ -->
+  <div class="flex flex-col items-center justify-center py-20 text-center" id="wishlist-empty">
+    <div class="w-28 h-28 rounded-full bg-surface-700 flex items-center justify-center mb-6">
+      <i class="fa-regular fa-heart text-5xl text-gray-600"></i>
+    </div>
+    <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-3">Your Wishlist is Empty</h2>
+    <p class="text-gray-400 max-w-md mb-8">
+      You haven't saved any items yet. Browse our collection and tap the heart icon on products you love.
+    </p>
+    <a href="{% url 'store:product_list' %}"
+       class="inline-flex items-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg shadow-brand-500/25">
+      <i class="fa-solid fa-th-large"></i> Start Shopping
+    </a>
+  </div>
+
+  {% endif %}
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* ── Remove from Wishlist (AJAX) ── */
+  function removeFromWishlist(productId, btnEl) {
+    const card = document.getElementById('wishlist-item-' + productId);
+    if (!card) return;
+
+    // Disable button to prevent double-clicks
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i>';
+
+    fetch("{% url 'store:toggle_wishlist' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application-www-form-urlencoded',
+        'X-CSRFToken': getCSRF(),
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: 'product_id=' + productId,
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Request failed');
+      return response.json();
+    })
+    .then(data => {
+      // Animate out the card
+      card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.9)';
+
+      setTimeout(() => {
+        card.remove();
+        showToast(data.message || 'Removed from wishlist', 'success');
+
+        // Update remaining count
+        const remaining = document.querySelectorAll('.wishlist-card').length;
+        const countEl = document.getElementById('wishlist-count');
+        const countTextEl = document.getElementById('wishlist-count-text');
+
+        if (remaining === 0) {
+          // Show empty state
+          if (countTextEl) countTextEl.textContent = 'Your wishlist is empty';
+          const grid = document.getElementById('wishlist-grid');
+          if (grid) {
+            grid.innerHTML = `
+              <div class="col-span-full flex flex-col items-center justify-center py-20 text-center">
+                <div class="w-28 h-28 rounded-full bg-surface-700 flex items-center justify-center mb-6">
+                  <i class="fa-regular fa-heart text-5xl text-gray-600"></i>
+                </div>
+                <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-3">Your Wishlist is Empty</h2>
+                <p class="text-gray-400 max-w-md mb-8">
+                  You haven't saved any items yet. Browse our collection and tap the heart icon on products you love.
+                </p>
+                <a href="{% url 'store:product_list' %}"
+                   class="inline-flex items-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg shadow-brand-500/25">
+                  <i class="fa-solid fa-th-large"></i> Start Shopping
+                </a>
+              </div>`;
+          }
+        } else {
+          if (countEl) countEl.textContent = remaining;
+          if (countTextEl) {
+            countTextEl.innerHTML = '<span id="wishlist-count">' + remaining + '</span> item' + (remaining === 1 ? '' : 's') + ' saved';
+          }
+        }
+      }, 400);
+    })
+    .catch(err => {
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<i class="fa-solid fa-heart-crack text-sm"></i>';
+      showToast('Failed to remove item. Please try again.', 'error');
+    });
+  }
+</script>
+{% endblock %}

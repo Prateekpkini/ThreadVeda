@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Checkout — ThreadVeda{% endblock %}
+
+{% block extra_head %}
+<style>
+  .form-input { width:100%; background:rgb(37,37,37); border:1px solid rgba(255,255,255,0.1); border-radius:0.75rem; padding:0.75rem 1rem; color:white; transition:all 0.2s; }
+  .form-input:focus { outline:none; border-color:#e6a243; box-shadow:0 0 0 2px rgba(230,162,67,0.2); }
+  .form-input::placeholder { color:rgb(107,114,128); }
+  .form-input.is-invalid { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.15); }
+  .field-error { color: #f87171; font-size: 0.8rem; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-8 sm:py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- ── Breadcrumb ── -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-8">
+      <a href="{% url 'store:home' %}" class="hover:text-brand-400 transition">
+        <i class="fa-solid fa-house text-xs"></i>
+      </a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
+      <a href="{% url 'store:cart' %}" class="hover:text-brand-400 transition">Cart</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
+      <span class="text-gray-300">Checkout</span>
+    </nav>
+
+    <!-- ── Page header ── -->
+    <div class="mb-10">
+      <h1 class="font-display text-3xl sm:text-4xl font-bold text-white">Checkout</h1>
+      <p class="text-gray-400 mt-2">Complete your order by filling in the details below.</p>
+    </div>
+
+    <!-- ── Non-field errors ── -->
+    {% if form.non_field_errors %}
+    <div class="glass rounded-xl px-5 py-4 mb-8 border-l-4 border-red-500 flex items-start gap-3">
+      <span class="text-red-400 mt-0.5"><i class="fa-solid fa-circle-exclamation"></i></span>
+      <div class="text-sm text-gray-200">
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Checkout form ── -->
+    <form method="post" id="checkout-form">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+
+        <!-- ═══════════  LEFT COLUMN — Shipping Details  ═══════════ -->
+        <div class="lg:col-span-2 space-y-8">
+
+          <!-- Shipping Information -->
+          <div class="glass rounded-2xl p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-truck-fast text-brand-400"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-white">Shipping Information</h2>
+                <p class="text-xs text-gray-500">Where should we send your order?</p>
+              </div>
+            </div>
+
+            <!-- Full Name · Email · Phone -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+              <!-- Full Name -->
+              <div>
+                <label for="{{ form.full_name.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                  Full Name <span class="text-brand-400">*</span>
+                </label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}
+                <div class="field-error">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                  Email <span class="text-brand-400">*</span>
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <div class="field-error">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  {% for error in form.email.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Phone -->
+              <div>
+                <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                  Phone <span class="text-brand-400">*</span>
+                </label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                <div class="field-error">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  {% for error in form.phone.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Address Line 1 -->
+            <div class="mb-5">
+              <label for="{{ form.address_line1.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                Address Line 1 <span class="text-brand-400">*</span>
+              </label>
+              {{ form.address_line1 }}
+              {% if form.address_line1.errors %}
+              <div class="field-error">
+                <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                {% for error in form.address_line1.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Address Line 2 -->
+            <div class="mb-5">
+              <label for="{{ form.address_line2.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                Address Line 2 <span class="text-gray-500 text-xs font-normal">(Optional)</span>
+              </label>
+              {{ form.address_line2 }}
+              {% if form.address_line2.errors %}
+              <div class="field-error">
+                <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                {% for error in form.address_line2.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- City · State · ZIP -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <!-- City -->
+              <div>
+                <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                  City <span class="text-brand-400">*</span>
+                </label>
+                {{ form.city }}
+                {% if form.city.errors %}
+                <div class="field-error">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  {% for error in form.city.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- State -->
+              <div>
+                <label for="{{ form.state.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                  State <span class="text-brand-400">*</span>
+                </label>
+                {{ form.state }}
+                {% if form.state.errors %}
+                <div class="field-error">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  {% for error in form.state.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- ZIP Code -->
+              <div>
+                <label for="{{ form.zip_code.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                  ZIP Code <span class="text-brand-400">*</span>
+                </label>
+                {{ form.zip_code }}
+                {% if form.zip_code.errors %}
+                <div class="field-error">
+                  <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                  {% for error in form.zip_code.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Notes -->
+          <div class="glass rounded-2xl p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-note-sticky text-brand-400"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-white">Order Notes</h2>
+                <p class="text-xs text-gray-500">Any special instructions for your order?</p>
+              </div>
+            </div>
+
+            <div>
+              {{ form.notes }}
+              {% if form.notes.errors %}
+              <div class="field-error">
+                <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+                {% for error in form.notes.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+        <!-- END LEFT COLUMN -->
+
+        <!-- ═══════════  RIGHT COLUMN — Order Summary  ═══════════ -->
+        <div class="lg:col-span-1">
+          <div class="glass rounded-2xl p-6 sm:p-8 lg:sticky lg:top-28">
+
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-receipt text-brand-400"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-semibold text-white">Order Summary</h2>
+                <p class="text-xs text-gray-500">{{ cart_items|length }} item{{ cart_items|length|pluralize }}</p>
+              </div>
+            </div>
+
+            <!-- Cart items list -->
+            <div class="space-y-4 mb-6 max-h-72 overflow-y-auto no-scrollbar pr-1">
+              {% for item in cart_items %}
+              <div class="flex items-center gap-3 group">
+                <!-- Thumbnail -->
+                <div class="w-16 h-16 rounded-xl bg-surface-700 overflow-hidden flex-shrink-0">
+                  {% if item.product.primary_image %}
+                  <img src="{{ item.product.primary_image.image.url }}"
+                       alt="{{ item.product.name }}"
+                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  {% else %}
+                  <div class="w-full h-full flex items-center justify-center text-gray-600">
+                    <i class="fa-solid fa-image text-xl"></i>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <!-- Details -->
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-sm font-medium text-white truncate">{{ item.product.name }}</h4>
+                  <div class="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                    {% if item.size %}<span>Size: {{ item.size }}</span>{% endif %}
+                    {% if item.size and item.color %}<span>·</span>{% endif %}
+                    {% if item.color %}<span>{{ item.color }}</span>{% endif %}
+                  </div>
+                  <div class="flex items-center justify-between mt-1">
+                    <span class="text-xs text-gray-400">Qty: {{ item.quantity }}</span>
+                    <span class="text-sm font-semibold text-brand-400">₹{{ item.total_price|floatformat:0|intcomma }}</span>
+                  </div>
+                </div>
+              </div>
+              {% empty %}
+              <div class="text-center py-6 text-gray-500">
+                <i class="fa-solid fa-cart-shopping text-2xl mb-2"></i>
+                <p class="text-sm">Your cart is empty.</p>
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Divider -->
+            <hr class="border-white/5 mb-5" />
+
+            <!-- Price breakdown -->
+            <div class="space-y-3 text-sm">
+              <div class="flex items-center justify-between text-gray-300">
+                <span>Subtotal</span>
+                <span>₹{{ subtotal|floatformat:0|intcomma }}</span>
+              </div>
+              <div class="flex items-center justify-between text-gray-300">
+                <span>Shipping</span>
+                {% if shipping == 0 or shipping == "0" %}
+                <span class="text-green-400 font-medium">Free</span>
+                {% else %}
+                <span>₹{{ shipping|floatformat:0|intcomma }}</span>
+                {% endif %}
+              </div>
+              <div class="flex items-center justify-between text-gray-300">
+                <span>Tax (GST)</span>
+                <span>₹{{ tax|floatformat:0|intcomma }}</span>
+              </div>
+
+              <hr class="border-white/5" />
+
+              <div class="flex items-center justify-between text-white text-lg font-bold pt-1">
+                <span>Total</span>
+                <span class="text-brand-400">₹{{ total|floatformat:0|intcomma }}</span>
+              </div>
+            </div>
+
+            <!-- Place Order button -->
+            <button type="submit"
+                    id="place-order-btn"
+                    class="w-full mt-8 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold px-6 py-4 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all flex items-center justify-center gap-2 text-base shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30">
+              <i class="fa-solid fa-lock text-sm"></i>
+              Place Order — ₹{{ total|floatformat:0|intcomma }}
+            </button>
+
+            <!-- Secure payment note -->
+            <div class="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
+              <i class="fa-solid fa-shield-halved text-green-500"></i>
+              <span>Secure checkout · SSL encrypted</span>
+            </div>
+
+            <!-- Payment methods -->
+            <div class="flex items-center justify-center gap-3 mt-4 text-gray-600">
+              <i class="fa-brands fa-cc-visa text-xl"></i>
+              <i class="fa-brands fa-cc-mastercard text-xl"></i>
+              <i class="fa-brands fa-cc-amex text-xl"></i>
+              <i class="fa-brands fa-google-pay text-xl"></i>
+            </div>
+
+          </div>
+        </div>
+        <!-- END RIGHT COLUMN -->
+
+      </div>
+    </form>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* ── Add is-invalid class to fields with server-side errors ── */
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.field-error').forEach(function(el) {
+      const input = el.previousElementSibling;
+      if (input && (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA' || input.tagName === 'SELECT')) {
+        input.classList.add('is-invalid');
+      }
+    });
+
+    /* ── Prevent double submission ── */
+    const form = document.getElementById('checkout-form');
+    const btn = document.getElementById('place-order-btn');
+    if (form && btn) {
+      form.addEventListener('submit', function() {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sm"></i> Processing…';
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+      });
+    }
+  });
+</script>
+{% endblock %}

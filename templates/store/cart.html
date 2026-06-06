@@ -1,0 +1,452 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Shopping Cart — ThreadVeda{% endblock %}
+
+{% block content %}
+<section class="py-10 sm:py-14">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- ═══════════ Page Header ═══════════ -->
+    <div class="mb-8 sm:mb-10">
+      <nav class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+        <a href="{% url 'store:home' %}" class="hover:text-brand-400 transition">Home</a>
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        <span class="text-gray-300">Shopping Cart</span>
+      </nav>
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-brand-500/10 flex items-center justify-center">
+          <i class="fa-solid fa-bag-shopping text-brand-400 text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-display text-3xl sm:text-4xl font-bold text-white">Shopping Cart</h1>
+          {% if cart_items %}
+          <p class="text-gray-400 text-sm mt-1">{{ cart_items|length }} item{{ cart_items|length|pluralize }} in your cart</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if cart_items %}
+    <!-- ═══════════ Free Shipping Progress Bar ═══════════ -->
+    <div class="glass rounded-2xl p-5 mb-8" id="shipping-bar-card">
+      {% if subtotal >= 999 %}
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-truck-fast text-green-400"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-green-400 font-semibold text-sm">
+            <i class="fa-solid fa-check-circle mr-1"></i> You've unlocked free shipping!
+          </p>
+          <div class="w-full bg-surface-700 rounded-full h-2 mt-2">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full transition-all duration-700" style="width:100%"></div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-truck text-brand-400"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-gray-300 text-sm">
+            Add <span class="text-brand-400 font-semibold" id="shipping-remaining">₹{{ 999|add:"-"|add:subtotal|floatformat:0|intcomma }}</span> more for <span class="text-green-400 font-medium">FREE shipping</span>
+          </p>
+          {% widthratio subtotal 999 100 as progress %}
+          <div class="w-full bg-surface-700 rounded-full h-2 mt-2">
+            <div class="bg-gradient-to-r from-brand-500 to-brand-400 h-2 rounded-full transition-all duration-700" id="shipping-progress" style="width:{{ progress }}%"></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ═══════════ Two-Column Layout ═══════════ -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- LEFT: Cart Items (takes 2 cols) -->
+      <div class="lg:col-span-2 space-y-4" id="cart-items-list">
+        {% for item in cart_items %}
+        <div class="glass rounded-2xl p-4 sm:p-6 group hover:border-white/15 transition-all duration-300 cart-item-row" data-item-id="{{ item.id }}" data-unit-price="{{ item.product.effective_price|floatformat:2 }}">
+          <div class="flex gap-4 sm:gap-6">
+
+            <!-- Product Image -->
+            <a href="{{ item.product.get_absolute_url }}" class="flex-shrink-0">
+              <div class="w-20 h-24 sm:w-28 sm:h-32 rounded-xl overflow-hidden bg-surface-700">
+                {% if item.product.primary_image %}
+                <img src="{{ item.product.primary_image.image.url }}" alt="{{ item.product.name }}"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-600">
+                  <i class="fa-solid fa-image text-2xl"></i>
+                </div>
+                {% endif %}
+              </div>
+            </a>
+
+            <!-- Product Details -->
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div class="min-w-0">
+                  <a href="{{ item.product.get_absolute_url }}" class="text-white font-semibold text-sm sm:text-base hover:text-brand-400 transition truncate block">
+                    {{ item.product.name }}
+                  </a>
+                  <p class="text-gray-500 text-xs mt-0.5">{{ item.product.category.name }}</p>
+
+                  <!-- Size / Color Tags -->
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    {% if item.size %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-700 text-xs text-gray-300 border border-white/5">
+                      <i class="fa-solid fa-ruler text-gray-500 text-[10px]"></i> {{ item.size }}
+                    </span>
+                    {% endif %}
+                    {% if item.color %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-700 text-xs text-gray-300 border border-white/5">
+                      <i class="fa-solid fa-palette text-gray-500 text-[10px]"></i> {{ item.color }}
+                    </span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Remove Button (desktop) -->
+                <button onclick="removeItem({{ item.id }}, this)" class="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition flex-shrink-0" title="Remove item">
+                  <i class="fa-solid fa-trash-can text-sm"></i>
+                </button>
+              </div>
+
+              <!-- Price & Quantity Row -->
+              <div class="flex items-center justify-between mt-4 gap-4">
+
+                <!-- Unit Price -->
+                <div class="text-sm">
+                  {% if item.product.discount_price %}
+                  <span class="text-brand-400 font-semibold">₹{{ item.product.effective_price|floatformat:0|intcomma }}</span>
+                  <span class="text-gray-500 line-through text-xs ml-1">₹{{ item.product.price|floatformat:0|intcomma }}</span>
+                  {% else %}
+                  <span class="text-gray-300 font-medium">₹{{ item.product.effective_price|floatformat:0|intcomma }}</span>
+                  {% endif %}
+                </div>
+
+                <!-- Quantity Controls -->
+                <div class="flex items-center gap-0 bg-surface-700 rounded-xl border border-white/10">
+                  <button onclick="updateQuantity({{ item.id }}, {{ item.quantity }} - 1, this)" class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-l-xl transition {% if item.quantity <= 1 %}opacity-40 cursor-not-allowed{% endif %}" {% if item.quantity <= 1 %}disabled{% endif %}>
+                    <i class="fa-solid fa-minus text-xs"></i>
+                  </button>
+                  <span class="w-10 text-center text-white text-sm font-medium item-qty" data-item-id="{{ item.id }}">{{ item.quantity }}</span>
+                  <button onclick="updateQuantity({{ item.id }}, {{ item.quantity }} + 1, this)" class="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-r-xl transition">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                  </button>
+                </div>
+
+                <!-- Line Total -->
+                <div class="text-right">
+                  <p class="text-white font-semibold text-sm sm:text-base line-total" data-item-id="{{ item.id }}">₹{{ item.total_price|floatformat:0|intcomma }}</p>
+                </div>
+              </div>
+
+              <!-- Remove Button (mobile) -->
+              <button onclick="removeItem({{ item.id }}, this)" class="sm:hidden flex items-center gap-1.5 mt-3 text-xs text-gray-500 hover:text-red-400 transition">
+                <i class="fa-solid fa-trash-can"></i> Remove
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- RIGHT: Order Summary Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="glass rounded-2xl p-6 sticky top-28" id="order-summary">
+          <h2 class="font-display text-xl font-bold text-white mb-6">Order Summary</h2>
+
+          <div class="space-y-4 text-sm">
+            <!-- Subtotal -->
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400">Subtotal</span>
+              <span class="text-gray-200 font-medium" id="summary-subtotal">₹{{ subtotal|floatformat:0|intcomma }}</span>
+            </div>
+
+            <!-- Shipping -->
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400">Shipping</span>
+              {% if shipping == 0 %}
+              <span class="text-green-400 font-medium" id="summary-shipping">FREE</span>
+              {% else %}
+              <span class="text-gray-200 font-medium" id="summary-shipping">₹{{ shipping|floatformat:0|intcomma }}</span>
+              {% endif %}
+            </div>
+            {% if shipping == 0 %}
+            <p class="text-xs text-green-400/70 -mt-2 flex items-center gap-1">
+              <i class="fa-solid fa-check text-[10px]"></i> Free shipping on orders above ₹999
+            </p>
+            {% else %}
+            <p class="text-xs text-gray-500 -mt-2">Free shipping on orders above ₹999</p>
+            {% endif %}
+
+            <!-- Tax -->
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400">Tax <span class="text-gray-500">(18% GST)</span></span>
+              <span class="text-gray-200 font-medium" id="summary-tax">₹{{ tax|floatformat:0|intcomma }}</span>
+            </div>
+
+            <hr class="border-white/5" />
+
+            <!-- Total -->
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-white font-semibold text-base">Total</span>
+              <span class="text-brand-400 font-bold text-xl font-display" id="summary-total">₹{{ total|floatformat:0|intcomma }}</span>
+            </div>
+          </div>
+
+          <!-- Checkout Button -->
+          <a href="{% url 'store:checkout' %}"
+             class="mt-6 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold px-6 py-3.5 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30">
+            <i class="fa-solid fa-lock text-sm"></i>
+            Proceed to Checkout
+          </a>
+
+          <!-- Continue Shopping -->
+          <a href="{% url 'store:product_list' %}"
+             class="mt-3 w-full flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-brand-400 py-2 transition">
+            <i class="fa-solid fa-arrow-left text-xs"></i>
+            Continue Shopping
+          </a>
+
+          <!-- Security badges -->
+          <div class="mt-6 pt-5 border-t border-white/5">
+            <div class="flex items-center justify-center gap-4 text-gray-500 text-xs">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved text-green-500/70"></i> Secure</span>
+              <span class="flex items-center gap-1"><i class="fa-solid fa-rotate-left text-brand-400/70"></i> Easy Returns</span>
+              <span class="flex items-center gap-1"><i class="fa-solid fa-truck text-brand-400/70"></i> Fast Delivery</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- ═══════════ Empty Cart State ═══════════ -->
+    <div class="flex flex-col items-center justify-center py-20 sm:py-28">
+      <div class="glass rounded-3xl p-12 sm:p-16 text-center max-w-lg mx-auto">
+        <!-- Animated Icon -->
+        <div class="w-28 h-28 mx-auto mb-8 rounded-full bg-surface-700 flex items-center justify-center relative">
+          <i class="fa-solid fa-bag-shopping text-4xl text-gray-600"></i>
+          <span class="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-surface-600 flex items-center justify-center border-2 border-surface-800">
+            <i class="fa-solid fa-question text-gray-500 text-sm"></i>
+          </span>
+        </div>
+
+        <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-3">Your cart is empty</h2>
+        <p class="text-gray-400 text-sm sm:text-base leading-relaxed mb-8">
+          Looks like you haven't added any items yet.<br class="hidden sm:inline" />
+          Explore our collection and find something you love.
+        </p>
+
+        <a href="{% url 'store:product_list' %}"
+           class="inline-flex items-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg shadow-brand-500/20">
+          <i class="fa-solid fa-store"></i>
+          Start Shopping
+        </a>
+
+        <div class="flex items-center justify-center gap-6 mt-8 text-xs text-gray-500">
+          <span class="flex items-center gap-1"><i class="fa-solid fa-truck text-brand-400/60"></i> Free shipping above ₹999</span>
+          <span class="flex items-center gap-1"><i class="fa-solid fa-rotate-left text-brand-400/60"></i> Easy returns</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* ══════════════════════════════════════════════
+     CART PAGE — AJAX Helpers
+  ══════════════════════════════════════════════ */
+
+  const CART_UPDATE_URL = "{% url 'store:update_cart' %}";
+  const CART_REMOVE_URL = "{% url 'store:remove_from_cart' %}";
+
+  /* ── Format a number as ₹X,XX,XXX (Indian locale) ── */
+  function formatPrice(num) {
+    return '₹' + Math.round(num).toLocaleString('en-IN');
+  }
+
+  /* ── Update Quantity via AJAX ── */
+  function updateQuantity(itemId, newQty, btnEl) {
+    if (newQty < 1) return;
+
+    // Disable buttons during request
+    const row = document.querySelector(`.cart-item-row[data-item-id="${itemId}"]`);
+    const buttons = row.querySelectorAll('button');
+    buttons.forEach(b => b.disabled = true);
+
+    fetch(CART_UPDATE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRF(),
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ item_id: itemId, quantity: newQty }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Update quantity display
+        const qtyEl = row.querySelector(`.item-qty[data-item-id="${itemId}"]`);
+        qtyEl.textContent = data.quantity || newQty;
+
+        // Update line total
+        const lineTotalEl = row.querySelector(`.line-total[data-item-id="${itemId}"]`);
+        if (data.line_total !== undefined) {
+          lineTotalEl.textContent = formatPrice(data.line_total);
+        } else {
+          const unitPrice = parseFloat(row.dataset.unitPrice);
+          lineTotalEl.textContent = formatPrice(unitPrice * newQty);
+        }
+
+        // Rebuild quantity button onclick with new qty
+        const qty = data.quantity || newQty;
+        const minusBtn = row.querySelectorAll('button')[0];
+        const plusBtn  = row.querySelectorAll('button')[1];
+        minusBtn.setAttribute('onclick', `updateQuantity(${itemId}, ${qty - 1}, this)`);
+        plusBtn.setAttribute('onclick', `updateQuantity(${itemId}, ${qty + 1}, this)`);
+
+        // Disable minus if qty is 1
+        if (qty <= 1) {
+          minusBtn.classList.add('opacity-40', 'cursor-not-allowed');
+          minusBtn.disabled = true;
+        } else {
+          minusBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+        }
+
+        // Update order summary
+        updateSummary(data);
+
+        // Update cart badge
+        if (data.cart_count !== undefined) updateCartBadge(data.cart_count);
+
+        showToast('Cart updated', 'success');
+      } else {
+        showToast(data.message || 'Could not update cart', 'error');
+      }
+    })
+    .catch(() => showToast('Something went wrong', 'error'))
+    .finally(() => {
+      buttons.forEach(b => {
+        // Re-enable all except possibly disabled minus
+        const row = b.closest('.cart-item-row');
+        if (row) b.disabled = false;
+      });
+    });
+  }
+
+  /* ── Remove Item via AJAX ── */
+  function removeItem(itemId, btnEl) {
+    const row = document.querySelector(`.cart-item-row[data-item-id="${itemId}"]`);
+
+    // Animate out
+    row.style.transition = 'opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease';
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(40px)';
+
+    fetch(CART_REMOVE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRF(),
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify({ item_id: itemId }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Collapse then remove
+        setTimeout(() => {
+          row.style.maxHeight = row.scrollHeight + 'px';
+          requestAnimationFrame(() => {
+            row.style.maxHeight = '0';
+            row.style.padding = '0';
+            row.style.margin = '0';
+            row.style.overflow = 'hidden';
+          });
+          setTimeout(() => row.remove(), 400);
+        }, 300);
+
+        // Update order summary
+        updateSummary(data);
+
+        // Update cart badge
+        if (data.cart_count !== undefined) updateCartBadge(data.cart_count);
+
+        // Update item count in header
+        const remaining = document.querySelectorAll('.cart-item-row').length - 1;
+        if (remaining <= 0) {
+          // Reload to show empty state
+          setTimeout(() => window.location.reload(), 600);
+        }
+
+        showToast('Item removed from cart', 'success');
+      } else {
+        // Undo animation on error
+        row.style.opacity = '1';
+        row.style.transform = 'translateX(0)';
+        showToast(data.message || 'Could not remove item', 'error');
+      }
+    })
+    .catch(() => {
+      row.style.opacity = '1';
+      row.style.transform = 'translateX(0)';
+      showToast('Something went wrong', 'error');
+    });
+  }
+
+  /* ── Update Order Summary from AJAX response ── */
+  function updateSummary(data) {
+    if (data.subtotal !== undefined) {
+      const subtotalEl = document.getElementById('summary-subtotal');
+      if (subtotalEl) subtotalEl.textContent = formatPrice(data.subtotal);
+    }
+    if (data.shipping !== undefined) {
+      const shippingEl = document.getElementById('summary-shipping');
+      if (shippingEl) {
+        shippingEl.textContent = data.shipping == 0 ? 'FREE' : formatPrice(data.shipping);
+        shippingEl.className = data.shipping == 0
+          ? 'text-green-400 font-medium'
+          : 'text-gray-200 font-medium';
+      }
+    }
+    if (data.tax !== undefined) {
+      const taxEl = document.getElementById('summary-tax');
+      if (taxEl) taxEl.textContent = formatPrice(data.tax);
+    }
+    if (data.total !== undefined) {
+      const totalEl = document.getElementById('summary-total');
+      if (totalEl) totalEl.textContent = formatPrice(data.total);
+    }
+
+    // Update shipping progress bar
+    if (data.subtotal !== undefined) {
+      const progressEl = document.getElementById('shipping-progress');
+      if (progressEl) {
+        const pct = Math.min((data.subtotal / 999) * 100, 100);
+        progressEl.style.width = pct + '%';
+        if (pct >= 100) {
+          progressEl.classList.remove('from-brand-500', 'to-brand-400');
+          progressEl.classList.add('from-green-500', 'to-emerald-400');
+        }
+      }
+      const remainEl = document.getElementById('shipping-remaining');
+      if (remainEl) {
+        const remaining = Math.max(999 - data.subtotal, 0);
+        remainEl.textContent = formatPrice(remaining);
+      }
+    }
+  }
+</script>
+{% endblock %}

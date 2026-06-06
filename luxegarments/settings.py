@@ -1,6 +1,6 @@
 """
 Django settings for luxegarments project.
-Luxe Garments — Premium Clothing E-Commerce Platform
+ThreadVeda — Premium Clothing E-Commerce Platform
 """
 
 from pathlib import Path

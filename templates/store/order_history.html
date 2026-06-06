@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}My Orders — ThreadVeda{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════  PAGE HEADER & BREADCRUMB  ═══════════════════ -->
+<section class="bg-surface-800/40 border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+      <a href="{% url 'store:home' %}" class="hover:text-brand-400 transition">
+        <i class="fa-solid fa-house text-xs"></i>
+      </a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
+      <span class="text-gray-300">My Orders</span>
+    </nav>
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="font-display text-3xl sm:text-4xl font-bold text-white">My Orders</h1>
+        <p class="text-gray-400 mt-1 text-sm">
+          {% if orders %}
+            {{ orders|length }} order{{ orders|length|pluralize }}
+          {% else %}
+            Track and manage your purchases
+          {% endif %}
+        </p>
+      </div>
+      <a href="{% url 'store:product_list' %}"
+         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-all self-start">
+        <i class="fa-solid fa-arrow-left text-xs"></i> Continue Shopping
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════  MAIN CONTENT  ═══════════════════ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+
+  {% if orders %}
+  <!-- ── Orders List ── -->
+  <div class="space-y-4 sm:space-y-5">
+    {% for order in orders %}
+    <div class="glass rounded-2xl overflow-hidden hover:border-brand-500/15 transition-all duration-300 group">
+
+      <!-- ── Desktop / Tablet Layout ── -->
+      <div class="hidden sm:block p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-6">
+          <!-- Left: Order info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <a href="{% url 'store:order_detail' order_number=order.order_number %}"
+                 class="text-white font-semibold text-base hover:text-brand-400 transition">
+                <i class="fa-solid fa-box text-brand-400/70 mr-1.5 text-sm"></i>{{ order.order_number }}
+              </a>
+              <!-- Order Status Badge -->
+              {% if order.status == 'pending' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Pending
+                </span>
+              {% elif order.status == 'confirmed' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Confirmed
+                </span>
+              {% elif order.status == 'processing' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Processing
+                </span>
+              {% elif order.status == 'shipped' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span> Shipped
+                </span>
+              {% elif order.status == 'delivered' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Delivered
+                </span>
+              {% elif order.status == 'cancelled' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Cancelled
+                </span>
+              {% endif %}
+              <!-- Payment Status Badge -->
+              {% if order.payment_status == 'paid' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+                  <i class="fa-solid fa-check text-[10px]"></i> Paid
+                </span>
+              {% elif order.payment_status == 'pending' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                  <i class="fa-regular fa-clock text-[10px]"></i> Payment Pending
+                </span>
+              {% elif order.payment_status == 'failed' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                  <i class="fa-solid fa-xmark text-[10px]"></i> Payment Failed
+                </span>
+              {% elif order.payment_status == 'refunded' %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <i class="fa-solid fa-rotate-left text-[10px]"></i> Refunded
+                </span>
+              {% endif %}
+            </div>
+
+            <!-- Meta row -->
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-1 mt-3 text-sm text-gray-400">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-regular fa-calendar text-xs text-gray-500"></i>
+                {{ order.created_at|date:"d M Y, h:i A" }}
+              </span>
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-cubes-stacked text-xs text-gray-500"></i>
+                {{ order.item_count }} item{{ order.item_count|pluralize }}
+              </span>
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-location-dot text-xs text-gray-500"></i>
+                {{ order.city }}, {{ order.state }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Right: Total & action -->
+          <div class="flex flex-col items-end gap-3 flex-shrink-0">
+            <div class="text-right">
+              <p class="text-xs text-gray-500 uppercase tracking-wider">Total</p>
+              <p class="text-xl font-bold text-white mt-0.5">₹{{ order.total|floatformat:0|intcomma }}</p>
+            </div>
+            <a href="{% url 'store:order_detail' order_number=order.order_number %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-brand-400 bg-brand-500/10 border border-brand-500/20 hover:bg-brand-500/20 hover:text-brand-300 transition-all">
+              View Details <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Mobile Layout ── -->
+      <div class="sm:hidden p-4">
+        <!-- Top row: Order # and status -->
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <a href="{% url 'store:order_detail' order_number=order.order_number %}"
+             class="text-white font-semibold text-sm hover:text-brand-400 transition">
+            <i class="fa-solid fa-box text-brand-400/70 mr-1 text-xs"></i>{{ order.order_number }}
+          </a>
+          {% if order.status == 'pending' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Pending
+            </span>
+          {% elif order.status == 'confirmed' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Confirmed
+            </span>
+          {% elif order.status == 'processing' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> Processing
+            </span>
+          {% elif order.status == 'shipped' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span> Shipped
+            </span>
+          {% elif order.status == 'delivered' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Delivered
+            </span>
+          {% elif order.status == 'cancelled' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Cancelled
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Date -->
+        <p class="text-xs text-gray-500 mb-3">
+          <i class="fa-regular fa-calendar mr-1"></i> {{ order.created_at|date:"d M Y, h:i A" }}
+        </p>
+
+        <!-- Badges row -->
+        <div class="flex flex-wrap gap-2 mb-3">
+          {% if order.payment_status == 'paid' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
+              <i class="fa-solid fa-check text-[9px]"></i> Paid
+            </span>
+          {% elif order.payment_status == 'pending' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+              <i class="fa-regular fa-clock text-[9px]"></i> Payment Pending
+            </span>
+          {% elif order.payment_status == 'failed' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+              <i class="fa-solid fa-xmark text-[9px]"></i> Payment Failed
+            </span>
+          {% elif order.payment_status == 'refunded' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <i class="fa-solid fa-rotate-left text-[9px]"></i> Refunded
+            </span>
+          {% endif %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white/5 text-gray-400 border border-white/10">
+            <i class="fa-solid fa-cubes-stacked text-[9px]"></i> {{ order.item_count }} item{{ order.item_count|pluralize }}
+          </span>
+        </div>
+
+        <!-- Bottom row: Total + action -->
+        <div class="flex items-center justify-between pt-3 border-t border-white/5">
+          <div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Total</p>
+            <p class="text-lg font-bold text-white">₹{{ order.total|floatformat:0|intcomma }}</p>
+          </div>
+          <a href="{% url 'store:order_detail' order_number=order.order_number %}"
+             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium text-brand-400 bg-brand-500/10 border border-brand-500/20 hover:bg-brand-500/20 transition-all">
+            View Details <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- ── Empty State ── -->
+  <div class="flex flex-col items-center justify-center py-20 sm:py-28">
+    <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-surface-700/60 border border-white/5 flex items-center justify-center mb-6">
+      <i class="fa-solid fa-bag-shopping text-4xl sm:text-5xl text-gray-600"></i>
+    </div>
+    <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-3">No Orders Yet</h2>
+    <p class="text-gray-400 text-center max-w-md mb-8 leading-relaxed">
+      Looks like you haven't placed any orders yet. Browse our curated collection and find something you love.
+    </p>
+    <a href="{% url 'store:product_list' %}"
+       class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold hover:from-brand-600 hover:to-brand-700 active:scale-[.97] transition-all shadow-lg shadow-brand-500/25">
+      Start Shopping <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+  {% endif %}
+
+</section>
+
+{% endblock %}

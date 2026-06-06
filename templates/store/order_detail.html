@@ -1,0 +1,476 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Order #{{ order.order_number }} — ThreadVeda{% endblock %}
+
+{% block content %}
+<section class="py-8 sm:py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- ═══════════════════  BREADCRUMB  ═══════════════════ -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-8">
+      <a href="{% url 'store:home' %}" class="hover:text-brand-400 transition">
+        <i class="fa-solid fa-house"></i>
+      </a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
+      <a href="{% url 'store:order_history' %}" class="hover:text-brand-400 transition">Orders</a>
+      <i class="fa-solid fa-chevron-right text-[10px] text-gray-600"></i>
+      <span class="text-gray-300">#{{ order.order_number }}</span>
+    </nav>
+
+    <!-- ═══════════════════  PAGE HEADER  ═══════════════════ -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+      <div>
+        <h1 class="font-display text-3xl sm:text-4xl font-bold text-white">
+          Order <span class="text-brand-400">#{{ order.order_number }}</span>
+        </h1>
+        <p class="text-gray-400 mt-1 text-sm">
+          Placed on {{ order.created_at|date:"d M Y, h:i A" }}
+        </p>
+      </div>
+      <a href="{% url 'store:order_history' %}"
+         class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-brand-400 transition group">
+        <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+        Back to Orders
+      </a>
+    </div>
+
+    <!-- ═══════════════════  STATUS TIMELINE  ═══════════════════ -->
+    {% if order.status != 'cancelled' %}
+    <div class="glass rounded-2xl p-6 sm:p-8 mb-10">
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">Order Progress</h2>
+
+      {% with status=order.status %}
+      {# Map status to step number: pending=1, confirmed=2, processing=3, shipped=4, delivered=5 #}
+      {% if status == 'pending' %}
+        {% with current_step=1 %}{% include "store/_order_timeline_steps.html" %}{% endwith %}
+      {% elif status == 'confirmed' %}
+        {% with current_step=2 %}{% include "store/_order_timeline_steps.html" %}{% endwith %}
+      {% elif status == 'processing' %}
+        {% with current_step=3 %}{% include "store/_order_timeline_steps.html" %}{% endwith %}
+      {% elif status == 'shipped' %}
+        {% with current_step=4 %}{% include "store/_order_timeline_steps.html" %}{% endwith %}
+      {% elif status == 'delivered' %}
+        {% with current_step=5 %}{% include "store/_order_timeline_steps.html" %}{% endwith %}
+      {% endif %}
+      {% endwith %}
+
+      <!-- Timeline — Desktop (horizontal) -->
+      <div class="hidden sm:block" id="timeline-desktop">
+        <div class="flex items-center justify-between relative">
+          <!-- Background track -->
+          <div class="absolute top-5 left-0 right-0 h-0.5 bg-surface-600"></div>
+          <!-- Progress track (filled via JS) -->
+          <div class="absolute top-5 left-0 h-0.5 bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-700" id="timeline-progress-desktop"></div>
+
+          {% with steps="Pending,Confirmed,Processing,Shipped,Delivered" %}
+          {% for label in steps|make_list %}
+          {% endfor %}
+          {% endwith %}
+
+          <!-- Step 1: Pending -->
+          <div class="relative z-10 flex flex-col items-center timeline-step" data-step="1">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 timeline-dot">
+              <i class="fa-solid fa-clock"></i>
+            </div>
+            <span class="mt-3 text-xs font-medium timeline-label">Pending</span>
+          </div>
+
+          <!-- Step 2: Confirmed -->
+          <div class="relative z-10 flex flex-col items-center timeline-step" data-step="2">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 timeline-dot">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="mt-3 text-xs font-medium timeline-label">Confirmed</span>
+          </div>
+
+          <!-- Step 3: Processing -->
+          <div class="relative z-10 flex flex-col items-center timeline-step" data-step="3">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 timeline-dot">
+              <i class="fa-solid fa-box-open"></i>
+            </div>
+            <span class="mt-3 text-xs font-medium timeline-label">Processing</span>
+          </div>
+
+          <!-- Step 4: Shipped -->
+          <div class="relative z-10 flex flex-col items-center timeline-step" data-step="4">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 timeline-dot">
+              <i class="fa-solid fa-truck-fast"></i>
+            </div>
+            <span class="mt-3 text-xs font-medium timeline-label">Shipped</span>
+          </div>
+
+          <!-- Step 5: Delivered -->
+          <div class="relative z-10 flex flex-col items-center timeline-step" data-step="5">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 timeline-dot">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <span class="mt-3 text-xs font-medium timeline-label">Delivered</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline — Mobile (vertical) -->
+      <div class="sm:hidden" id="timeline-mobile">
+        <div class="relative pl-8">
+          <!-- Vertical track -->
+          <div class="absolute left-[15px] top-0 bottom-0 w-0.5 bg-surface-600"></div>
+          <div class="absolute left-[15px] top-0 w-0.5 bg-gradient-to-b from-brand-500 to-brand-400 transition-all duration-700" id="timeline-progress-mobile"></div>
+
+          <!-- Step 1 -->
+          <div class="relative flex items-center gap-4 pb-8 timeline-step-m" data-step="1">
+            <div class="absolute left-[-17px] w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all timeline-dot-m">
+              <i class="fa-solid fa-clock"></i>
+            </div>
+            <span class="text-sm font-medium timeline-label-m">Pending</span>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="relative flex items-center gap-4 pb-8 timeline-step-m" data-step="2">
+            <div class="absolute left-[-17px] w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all timeline-dot-m">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="text-sm font-medium timeline-label-m">Confirmed</span>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="relative flex items-center gap-4 pb-8 timeline-step-m" data-step="3">
+            <div class="absolute left-[-17px] w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all timeline-dot-m">
+              <i class="fa-solid fa-box-open"></i>
+            </div>
+            <span class="text-sm font-medium timeline-label-m">Processing</span>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="relative flex items-center gap-4 pb-8 timeline-step-m" data-step="4">
+            <div class="absolute left-[-17px] w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all timeline-dot-m">
+              <i class="fa-solid fa-truck-fast"></i>
+            </div>
+            <span class="text-sm font-medium timeline-label-m">Shipped</span>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="relative flex items-center gap-4 timeline-step-m" data-step="5">
+            <div class="absolute left-[-17px] w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all timeline-dot-m">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <span class="text-sm font-medium timeline-label-m">Delivered</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <!-- Cancelled banner -->
+    <div class="glass rounded-2xl p-6 sm:p-8 mb-10 border-l-4 border-red-500">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+          <i class="fa-solid fa-ban text-red-400 text-xl"></i>
+        </div>
+        <div>
+          <h2 class="text-white font-semibold text-lg">Order Cancelled</h2>
+          <p class="text-gray-400 text-sm">This order has been cancelled.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+
+    <!-- ═══════════════════  TWO-COLUMN LAYOUT  ═══════════════════ -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- ────────────  LEFT COLUMN: Order Items  ──────────── -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="glass rounded-2xl overflow-hidden">
+          <div class="px-6 py-5 border-b border-white/5">
+            <h2 class="text-white font-semibold text-lg flex items-center gap-2">
+              <i class="fa-solid fa-bag-shopping text-brand-400"></i>
+              Order Items
+              <span class="text-sm font-normal text-gray-500">({{ order.item_count }} item{{ order.item_count|pluralize }})</span>
+            </h2>
+          </div>
+
+          <div class="divide-y divide-white/5">
+            {% for item in order.items.all %}
+            <div class="px-6 py-5 flex gap-4 sm:gap-6 hover:bg-white/[0.02] transition">
+              <!-- Product image -->
+              <div class="flex-shrink-0">
+                {% if item.product and item.product.primary_image %}
+                <a href="{{ item.product.get_absolute_url }}" class="block">
+                  <img src="{{ item.product.primary_image.image.url }}"
+                       alt="{{ item.product_name }}"
+                       class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl bg-surface-700 hover:scale-105 transition-transform" />
+                </a>
+                {% else %}
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-surface-700 flex items-center justify-center">
+                  <i class="fa-solid fa-shirt text-gray-600 text-2xl"></i>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Item details -->
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div class="min-w-0">
+                    {% if item.product %}
+                    <a href="{{ item.product.get_absolute_url }}"
+                       class="text-white font-medium hover:text-brand-400 transition truncate block">
+                      {{ item.product_name }}
+                    </a>
+                    {% else %}
+                    <span class="text-white font-medium truncate block">{{ item.product_name }}</span>
+                    {% endif %}
+
+                    <div class="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-gray-400">
+                      {% if item.size %}
+                      <span class="inline-flex items-center gap-1">
+                        <i class="fa-solid fa-ruler text-[10px] text-gray-500"></i>
+                        {{ item.size }}
+                      </span>
+                      {% endif %}
+                      {% if item.color %}
+                      <span class="inline-flex items-center gap-1">
+                        <i class="fa-solid fa-palette text-[10px] text-gray-500"></i>
+                        {{ item.color }}
+                      </span>
+                      {% endif %}
+                    </div>
+
+                    <p class="text-gray-400 text-sm mt-2">
+                      {{ item.quantity }} × ₹{{ item.price|floatformat:0|intcomma }}
+                    </p>
+                  </div>
+
+                  <!-- Line total -->
+                  <div class="sm:text-right flex-shrink-0">
+                    <span class="text-white font-semibold text-lg">
+                      ₹{{ item.total_price|floatformat:0|intcomma }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="px-6 py-12 text-center">
+              <i class="fa-solid fa-box-open text-gray-600 text-4xl mb-3"></i>
+              <p class="text-gray-500">No items found in this order.</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ────────────  RIGHT COLUMN: Order Info + Price + Address  ──────────── -->
+      <div class="space-y-6">
+
+        <!-- Order Info Card -->
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-white font-semibold mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-file-invoice text-brand-400"></i>
+            Order Information
+          </h3>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400 text-sm">Order Number</span>
+              <span class="text-white font-mono text-sm font-medium">{{ order.order_number }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400 text-sm">Date</span>
+              <span class="text-gray-200 text-sm">{{ order.created_at|date:"d M Y" }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400 text-sm">Status</span>
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold
+                {% if order.status == 'delivered' %}bg-green-500/15 text-green-400
+                {% elif order.status == 'shipped' %}bg-blue-500/15 text-blue-400
+                {% elif order.status == 'processing' %}bg-yellow-500/15 text-yellow-400
+                {% elif order.status == 'confirmed' %}bg-brand-500/15 text-brand-400
+                {% elif order.status == 'cancelled' %}bg-red-500/15 text-red-400
+                {% else %}bg-gray-500/15 text-gray-400
+                {% endif %}">
+                <span class="w-1.5 h-1.5 rounded-full
+                  {% if order.status == 'delivered' %}bg-green-400
+                  {% elif order.status == 'shipped' %}bg-blue-400
+                  {% elif order.status == 'processing' %}bg-yellow-400
+                  {% elif order.status == 'confirmed' %}bg-brand-400
+                  {% elif order.status == 'cancelled' %}bg-red-400
+                  {% else %}bg-gray-400
+                  {% endif %}"></span>
+                {{ order.get_status_display }}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-gray-400 text-sm">Payment</span>
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold
+                {% if order.payment_status == 'paid' %}bg-green-500/15 text-green-400
+                {% elif order.payment_status == 'failed' %}bg-red-500/15 text-red-400
+                {% elif order.payment_status == 'refunded' %}bg-purple-500/15 text-purple-400
+                {% else %}bg-gray-500/15 text-gray-400
+                {% endif %}">
+                <span class="w-1.5 h-1.5 rounded-full
+                  {% if order.payment_status == 'paid' %}bg-green-400
+                  {% elif order.payment_status == 'failed' %}bg-red-400
+                  {% elif order.payment_status == 'refunded' %}bg-purple-400
+                  {% else %}bg-gray-400
+                  {% endif %}"></span>
+                {{ order.get_payment_status_display }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Breakdown Card -->
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-white font-semibold mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-receipt text-brand-400"></i>
+            Price Breakdown
+          </h3>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-gray-400">Subtotal</span>
+              <span class="text-gray-200">₹{{ order.subtotal|floatformat:0|intcomma }}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-gray-400">Shipping</span>
+              {% if order.shipping_cost > 0 %}
+              <span class="text-gray-200">₹{{ order.shipping_cost|floatformat:0|intcomma }}</span>
+              {% else %}
+              <span class="text-green-400 font-medium">Free</span>
+              {% endif %}
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-gray-400">Tax (GST)</span>
+              <span class="text-gray-200">₹{{ order.tax|floatformat:0|intcomma }}</span>
+            </div>
+
+            <hr class="border-white/5 my-1" />
+
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold">Total</span>
+              <span class="text-xl font-bold text-brand-400">₹{{ order.total|floatformat:0|intcomma }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipping Address Card -->
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-white font-semibold mb-5 flex items-center gap-2">
+            <i class="fa-solid fa-location-dot text-brand-400"></i>
+            Shipping Address
+          </h3>
+
+          <div class="space-y-2 text-sm">
+            <p class="text-white font-medium text-base">{{ order.full_name }}</p>
+
+            {% if order.phone %}
+            <p class="text-gray-400 flex items-center gap-2">
+              <i class="fa-solid fa-phone text-[11px] text-gray-500 w-4 text-center"></i>
+              {{ order.phone }}
+            </p>
+            {% endif %}
+
+            <div class="text-gray-300 pt-2 space-y-0.5">
+              <p>{{ order.address_line1 }}</p>
+              {% if order.address_line2 %}
+              <p>{{ order.address_line2 }}</p>
+              {% endif %}
+              <p>{{ order.city }}, {{ order.state }} — {{ order.zip_code }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Back to Orders (mobile-visible CTA) -->
+        <a href="{% url 'store:order_history' %}"
+           class="flex items-center justify-center gap-2 w-full bg-surface-700 hover:bg-surface-600 text-gray-300 hover:text-white font-medium px-6 py-3.5 rounded-xl transition-all group">
+          <i class="fa-solid fa-arrow-left text-sm group-hover:-translate-x-1 transition-transform"></i>
+          Back to All Orders
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function() {
+  // Map order status to step number
+  const statusMap = {
+    'pending': 1,
+    'confirmed': 2,
+    'processing': 3,
+    'shipped': 4,
+    'delivered': 5
+  };
+
+  const currentStatus = '{{ order.status }}';
+  const currentStep = statusMap[currentStatus] || 0;
+
+  if (currentStep === 0) return; // cancelled — no timeline
+
+  // ── Desktop timeline ──
+  const desktopSteps = document.querySelectorAll('#timeline-desktop .timeline-step');
+  const desktopProgress = document.getElementById('timeline-progress-desktop');
+
+  if (desktopSteps.length && desktopProgress) {
+    const progressPercent = ((currentStep - 1) / (desktopSteps.length - 1)) * 100;
+    desktopProgress.style.width = progressPercent + '%';
+
+    desktopSteps.forEach(step => {
+      const stepNum = parseInt(step.dataset.step);
+      const dot = step.querySelector('.timeline-dot');
+      const label = step.querySelector('.timeline-label');
+
+      if (stepNum < currentStep) {
+        // Completed
+        dot.classList.add('bg-brand-500', 'text-white', 'shadow-lg', 'shadow-brand-500/30');
+        label.classList.add('text-brand-400');
+      } else if (stepNum === currentStep) {
+        // Current
+        dot.classList.add('bg-brand-400', 'text-white', 'ring-4', 'ring-brand-400/20', 'shadow-lg', 'shadow-brand-400/40');
+        label.classList.add('text-white', 'font-semibold');
+      } else {
+        // Upcoming
+        dot.classList.add('bg-surface-600', 'text-gray-500');
+        label.classList.add('text-gray-500');
+      }
+    });
+  }
+
+  // ── Mobile timeline ──
+  const mobileSteps = document.querySelectorAll('#timeline-mobile .timeline-step-m');
+  const mobileProgress = document.getElementById('timeline-progress-mobile');
+
+  if (mobileSteps.length && mobileProgress) {
+    const progressPercent = ((currentStep - 1) / (mobileSteps.length - 1)) * 100;
+    mobileProgress.style.height = progressPercent + '%';
+
+    mobileSteps.forEach(step => {
+      const stepNum = parseInt(step.dataset.step);
+      const dot = step.querySelector('.timeline-dot-m');
+      const label = step.querySelector('.timeline-label-m');
+
+      if (stepNum < currentStep) {
+        dot.classList.add('bg-brand-500', 'text-white');
+        label.classList.add('text-brand-400');
+      } else if (stepNum === currentStep) {
+        dot.classList.add('bg-brand-400', 'text-white', 'ring-4', 'ring-brand-400/20');
+        label.classList.add('text-white', 'font-semibold');
+      } else {
+        dot.classList.add('bg-surface-600', 'text-gray-500');
+        label.classList.add('text-gray-500');
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}
