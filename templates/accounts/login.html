@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Sign In — Luxe Garments{% endblock %}
+{% block meta_description %}Sign in to your Luxe Garments account to track orders, manage your wishlist, and enjoy member perks.{% endblock %}
+
+{% block extra_head %}
+<style>
+  .auth-orb {
+    position: absolute;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,136,42,.25) 0%, transparent 70%);
+    filter: blur(80px);
+    animation: orbFloat 8s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes orbFloat {
+    0%   { transform: translate(-10%, -10%) scale(1); }
+    100% { transform: translate(10%, 10%) scale(1.15); }
+  }
+
+  .auth-form p { margin-bottom: 1rem; }
+  .auth-form label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+    margin-bottom: .35rem;
+  }
+  .auth-form input[type="text"],
+  .auth-form input[type="email"],
+  .auth-form input[type="password"] {
+    width: 100%;
+    padding: .7rem 1rem;
+    font-size: .9rem;
+    color: #f4f4f5;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: .75rem;
+    outline: none;
+    transition: border-color .25s, box-shadow .25s;
+  }
+  .auth-form input:focus {
+    border-color: #d4882a;
+    box-shadow: 0 0 0 3px rgba(212,136,42,.15);
+  }
+  .auth-form ul.errorlist { list-style: none; padding: 0; margin: .25rem 0 0; }
+  .auth-form ul.errorlist li { font-size: .75rem; color: #f87171; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="relative min-h-[calc(100vh-5rem)] flex items-center justify-center px-4 py-16 overflow-hidden">
+
+  <!-- Orbs -->
+  <div class="auth-orb -top-40 -right-40"></div>
+  <div class="auth-orb bottom-0 left-0 opacity-40" style="animation-delay:-4s"></div>
+
+  <!-- Card -->
+  <div class="relative w-full max-w-md z-10">
+    <div class="glass rounded-2xl p-8 sm:p-10 shadow-2xl">
+
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <a href="{% url 'store:home' %}" class="inline-flex items-center gap-2 mb-5">
+          <span class="text-brand-400 text-2xl"><i class="fa-solid fa-gem"></i></span>
+          <span class="font-display text-2xl font-bold text-white">Luxe<span class="text-brand-400">.</span></span>
+        </a>
+        <h1 class="font-display text-2xl sm:text-3xl font-bold text-white">Welcome Back</h1>
+        <p class="text-gray-400 text-sm mt-2">Sign in to continue shopping</p>
+      </div>
+
+      <!-- Form -->
+      <form method="post" class="auth-form" id="login-form">
+        {% csrf_token %}
+
+        <!-- Non-field / message errors -->
+        {% if form.non_field_errors %}
+        <div class="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-5">
+          {% for error in form.non_field_errors %}
+          <p class="text-sm text-red-400">{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Username -->
+        <div class="mb-5">
+          <label for="{{ form.username.id_for_label }}">Username</label>
+          {{ form.username }}
+          {% for e in form.username.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+        </div>
+
+        <!-- Password -->
+        <div class="mb-2">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          <div class="relative">
+            {{ form.password }}
+            <button type="button" onclick="togglePwdVis()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition" id="pwd-toggle" aria-label="Toggle password visibility">
+              <i class="fa-regular fa-eye" id="pwd-eye"></i>
+            </button>
+          </div>
+          {% for e in form.password.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+        </div>
+
+        <!-- Remember / Forgot -->
+        <div class="flex items-center justify-between mb-7">
+          <label class="flex items-center gap-2 cursor-pointer group">
+            <input type="checkbox" name="remember" class="w-4 h-4 rounded border-white/20 bg-white/5 text-brand-500 focus:ring-brand-500/30 focus:ring-offset-0" id="remember-me" />
+            <span class="text-xs text-gray-400 group-hover:text-gray-300 transition">Remember me</span>
+          </label>
+          <a href="#" class="text-xs text-brand-400 hover:text-brand-300 transition">Forgot password?</a>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" id="login-submit"
+          class="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold text-sm tracking-wide
+                 hover:from-brand-600 hover:to-brand-700 active:scale-[.98] transition-all duration-200 shadow-lg shadow-brand-500/20">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="flex items-center gap-4 my-7">
+        <span class="flex-1 h-px bg-white/10"></span>
+        <span class="text-xs text-gray-500 uppercase tracking-wider">or</span>
+        <span class="flex-1 h-px bg-white/10"></span>
+      </div>
+
+      <!-- Social (decorative) -->
+      <div class="flex gap-3">
+        <button class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-sm hover:bg-white/10 transition" disabled>
+          <i class="fa-brands fa-google"></i> Google
+        </button>
+        <button class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-sm hover:bg-white/10 transition" disabled>
+          <i class="fa-brands fa-facebook-f"></i> Facebook
+        </button>
+      </div>
+
+      <!-- Register link -->
+      <p class="text-center text-sm text-gray-400 mt-7">
+        Don't have an account?
+        <a href="{% url 'accounts:register' %}" class="text-brand-400 font-semibold hover:text-brand-300 transition" id="link-to-register">Create one</a>
+      </p>
+    </div>
+
+    <!-- Trust badges -->
+    <div class="flex items-center justify-center gap-6 mt-6 text-gray-600 text-xs">
+      <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-[10px]"></i> SSL Encrypted</span>
+      <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-[10px]"></i> Secure Login</span>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePwdVis() {
+    const inp = document.getElementById('id_login_password');
+    const eye = document.getElementById('pwd-eye');
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      eye.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      inp.type = 'password';
+      eye.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  }
+</script>
+{% endblock %}

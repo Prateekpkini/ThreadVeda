@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — Luxe Garments{% endblock %}
+{% block meta_description %}Join Luxe Garments for exclusive access to premium fashion, early drops, and member-only pricing.{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Animated gradient orb behind the card */
+  .auth-orb {
+    position: absolute;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,136,42,.25) 0%, transparent 70%);
+    filter: blur(80px);
+    animation: orbFloat 8s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes orbFloat {
+    0%   { transform: translate(-10%, -10%) scale(1); }
+    100% { transform: translate(10%, 10%) scale(1.15); }
+  }
+
+  /* Override Django form <p> and <input> defaults */
+  .auth-form p { margin-bottom: 1rem; }
+  .auth-form label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+    margin-bottom: .35rem;
+  }
+  .auth-form input[type="text"],
+  .auth-form input[type="email"],
+  .auth-form input[type="password"] {
+    width: 100%;
+    padding: .7rem 1rem;
+    font-size: .9rem;
+    color: #f4f4f5;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: .75rem;
+    outline: none;
+    transition: border-color .25s, box-shadow .25s;
+  }
+  .auth-form input:focus {
+    border-color: #d4882a;
+    box-shadow: 0 0 0 3px rgba(212,136,42,.15);
+  }
+  .auth-form .helptext,
+  .auth-form ul.errorlist + .helptext { display: block; font-size: .7rem; color: #71717a; margin-top: .3rem; }
+  .auth-form ul.errorlist { list-style: none; padding: 0; margin: .25rem 0 0; }
+  .auth-form ul.errorlist li { font-size: .75rem; color: #f87171; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="relative min-h-[calc(100vh-5rem)] flex items-center justify-center px-4 py-16 overflow-hidden">
+
+  <!-- Background orb -->
+  <div class="auth-orb -top-32 -left-32"></div>
+  <div class="auth-orb bottom-0 right-0 opacity-50" style="animation-delay:-4s"></div>
+
+  <!-- Card -->
+  <div class="relative w-full max-w-md z-10">
+    <div class="glass rounded-2xl p-8 sm:p-10 shadow-2xl">
+
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <a href="{% url 'store:home' %}" class="inline-flex items-center gap-2 mb-5">
+          <span class="text-brand-400 text-2xl"><i class="fa-solid fa-gem"></i></span>
+          <span class="font-display text-2xl font-bold text-white">Luxe<span class="text-brand-400">.</span></span>
+        </a>
+        <h1 class="font-display text-2xl sm:text-3xl font-bold text-white">Create Account</h1>
+        <p class="text-gray-400 text-sm mt-2">Join the world of premium fashion</p>
+      </div>
+
+      <!-- Form -->
+      <form method="post" class="auth-form" id="register-form">
+        {% csrf_token %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div class="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-5">
+          {% for error in form.non_field_errors %}
+          <p class="text-sm text-red-400">{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Two-column name row -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="mb-4">
+            <label for="{{ form.first_name.id_for_label }}">First Name</label>
+            {{ form.first_name }}
+            {% for e in form.first_name.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+          </div>
+          <div class="mb-4">
+            <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+            {{ form.last_name }}
+            {% for e in form.last_name.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Username -->
+        <div class="mb-4">
+          <label for="{{ form.username.id_for_label }}">Username</label>
+          {{ form.username }}
+          {% if form.username.help_text %}<p class="helptext">{{ form.username.help_text|striptags }}</p>{% endif %}
+          {% for e in form.username.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+        </div>
+
+        <!-- Email -->
+        <div class="mb-4">
+          <label for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+          {% for e in form.email.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label for="{{ form.password1.id_for_label }}">Password</label>
+          {{ form.password1 }}
+          {% if form.password1.help_text %}<p class="helptext">{{ form.password1.help_text|striptags }}</p>{% endif %}
+          {% for e in form.password1.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mb-6">
+          <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+          {{ form.password2 }}
+          {% for e in form.password2.errors %}<p class="text-xs text-red-400 mt-1">{{ e }}</p>{% endfor %}
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" id="register-submit"
+          class="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white font-semibold text-sm tracking-wide
+                 hover:from-brand-600 hover:to-brand-700 active:scale-[.98] transition-all duration-200 shadow-lg shadow-brand-500/20">
+          Create My Account
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="flex items-center gap-4 my-7">
+        <span class="flex-1 h-px bg-white/10"></span>
+        <span class="text-xs text-gray-500 uppercase tracking-wider">or</span>
+        <span class="flex-1 h-px bg-white/10"></span>
+      </div>
+
+      <!-- Social (decorative) -->
+      <div class="flex gap-3">
+        <button class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-sm hover:bg-white/10 transition" disabled>
+          <i class="fa-brands fa-google"></i> Google
+        </button>
+        <button class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-sm hover:bg-white/10 transition" disabled>
+          <i class="fa-brands fa-facebook-f"></i> Facebook
+        </button>
+      </div>
+
+      <!-- Login link -->
+      <p class="text-center text-sm text-gray-400 mt-7">
+        Already have an account?
+        <a href="{% url 'accounts:login' %}" class="text-brand-400 font-semibold hover:text-brand-300 transition" id="link-to-login">Sign in</a>
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

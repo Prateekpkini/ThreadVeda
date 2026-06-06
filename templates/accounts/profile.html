@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}My Profile — Luxe Garments{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+
+  <!-- Page header -->
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+    <div>
+      <p class="text-brand-400 text-sm font-semibold uppercase tracking-wider mb-1">My Account</p>
+      <h1 class="font-display text-3xl sm:text-4xl font-bold text-white">
+        Hello, {{ user.first_name|default:user.username }}<span class="text-brand-400">.</span>
+      </h1>
+    </div>
+    <a href="{% url 'accounts:edit_profile' %}"
+       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white transition"
+       id="btn-edit-profile">
+      <i class="fa-solid fa-pen-to-square text-brand-400"></i> Edit Profile
+    </a>
+  </div>
+
+  <!-- Two-column grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+
+    <!-- ════════════  LEFT COLUMN — Profile Details  ════════════ -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Avatar card -->
+      <div class="glass rounded-2xl p-6 text-center">
+        <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-brand-500/20 mb-4">
+          {{ user.first_name|make_list|first|default:user.username|make_list|first|upper }}
+        </div>
+        <h2 class="text-lg font-semibold text-white">{{ user.get_full_name|default:user.username }}</h2>
+        <p class="text-sm text-gray-400 mt-0.5">{{ user.email }}</p>
+        <span class="inline-block mt-3 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider
+          {% if user.is_staff %}bg-brand-500/15 text-brand-400{% else %}bg-green-500/15 text-green-400{% endif %}">
+          {% if user.is_staff %}Admin{% else %}Member{% endif %}
+        </span>
+      </div>
+
+      <!-- Details card -->
+      <div class="glass rounded-2xl p-6 space-y-5">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+          <i class="fa-solid fa-address-card text-brand-400"></i> Contact & Address
+        </h3>
+
+        <div class="space-y-4">
+          <!-- Phone -->
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 text-sm flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-phone"></i>
+            </span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wider">Phone</p>
+              <p class="text-sm text-gray-200 mt-0.5">{{ profile.phone|default:"Not provided" }}</p>
+            </div>
+          </div>
+
+          <!-- Address -->
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 text-sm flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-location-dot"></i>
+            </span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wider">Address</p>
+              <p class="text-sm text-gray-200 mt-0.5">{{ profile.address|default:"Not provided" }}</p>
+            </div>
+          </div>
+
+          <!-- City / State / ZIP -->
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 text-sm flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-city"></i>
+            </span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wider">City / State / ZIP</p>
+              <p class="text-sm text-gray-200 mt-0.5">
+                {% if profile.city %}{{ profile.city }}{% if profile.state %}, {{ profile.state }}{% endif %}{% if profile.zip_code %} — {{ profile.zip_code }}{% endif %}
+                {% else %}Not provided{% endif %}
+              </p>
+            </div>
+          </div>
+
+          <!-- Member since -->
+          <div class="flex items-start gap-3">
+            <span class="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-gray-500 text-sm flex-shrink-0 mt-0.5">
+              <i class="fa-regular fa-calendar"></i>
+            </span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wider">Member Since</p>
+              <p class="text-sm text-gray-200 mt-0.5">{{ user.date_joined|date:"F j, Y" }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit button (mobile duplicate) -->
+        <a href="{% url 'accounts:edit_profile' %}"
+           class="lg:hidden flex items-center justify-center gap-2 w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white text-sm font-semibold hover:from-brand-600 hover:to-brand-700 active:scale-[.98] transition-all">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+        </a>
+      </div>
+
+      <!-- Quick links card -->
+      <div class="glass rounded-2xl p-6">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-link text-brand-400"></i> Quick Links
+        </h3>
+        <div class="grid grid-cols-2 gap-3">
+          <a href="{% url 'store:order_history' %}" class="flex flex-col items-center gap-2 py-4 rounded-xl bg-white/[.03] border border-white/5 hover:bg-white/[.07] hover:border-brand-500/30 transition group">
+            <i class="fa-solid fa-box text-lg text-gray-500 group-hover:text-brand-400 transition"></i>
+            <span class="text-xs text-gray-400 group-hover:text-gray-200 transition">All Orders</span>
+          </a>
+          <a href="{% url 'store:wishlist' %}" class="flex flex-col items-center gap-2 py-4 rounded-xl bg-white/[.03] border border-white/5 hover:bg-white/[.07] hover:border-brand-500/30 transition group">
+            <i class="fa-regular fa-heart text-lg text-gray-500 group-hover:text-brand-400 transition"></i>
+            <span class="text-xs text-gray-400 group-hover:text-gray-200 transition">Wishlist</span>
+          </a>
+          <a href="{% url 'store:cart' %}" class="flex flex-col items-center gap-2 py-4 rounded-xl bg-white/[.03] border border-white/5 hover:bg-white/[.07] hover:border-brand-500/30 transition group">
+            <i class="fa-solid fa-bag-shopping text-lg text-gray-500 group-hover:text-brand-400 transition"></i>
+            <span class="text-xs text-gray-400 group-hover:text-gray-200 transition">Cart</span>
+          </a>
+          <a href="{% url 'store:product_list' %}" class="flex flex-col items-center gap-2 py-4 rounded-xl bg-white/[.03] border border-white/5 hover:bg-white/[.07] hover:border-brand-500/30 transition group">
+            <i class="fa-solid fa-shirt text-lg text-gray-500 group-hover:text-brand-400 transition"></i>
+            <span class="text-xs text-gray-400 group-hover:text-gray-200 transition">Shop</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════  RIGHT COLUMN — Recent Orders  ════════════ -->
+    <div class="lg:col-span-3">
+      <div class="glass rounded-2xl overflow-hidden">
+
+        <!-- Table header -->
+        <div class="flex items-center justify-between px-6 py-5 border-b border-white/5">
+          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-brand-400"></i> Recent Orders
+          </h3>
+          <a href="{% url 'store:order_history' %}" class="text-xs text-brand-400 hover:text-brand-300 font-medium transition" id="link-all-orders">
+            View All <i class="fa-solid fa-arrow-right ml-1"></i>
+          </a>
+        </div>
+
+        {% if orders %}
+        <!-- Desktop table -->
+        <div class="hidden sm:block overflow-x-auto">
+          <table class="w-full text-sm" id="orders-table">
+            <thead>
+              <tr class="text-xs uppercase tracking-wider text-gray-500 border-b border-white/5">
+                <th class="text-left px-6 py-3 font-semibold">Order</th>
+                <th class="text-left px-6 py-3 font-semibold">Date</th>
+                <th class="text-left px-6 py-3 font-semibold">Items</th>
+                <th class="text-left px-6 py-3 font-semibold">Total</th>
+                <th class="text-left px-6 py-3 font-semibold">Status</th>
+                <th class="text-right px-6 py-3 font-semibold"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {% for order in orders %}
+              <tr class="hover:bg-white/[.02] transition">
+                <td class="px-6 py-4">
+                  <span class="font-mono text-brand-400 font-medium">{{ order.order_number }}</span>
+                </td>
+                <td class="px-6 py-4 text-gray-400">{{ order.created_at|date:"d M Y" }}</td>
+                <td class="px-6 py-4 text-gray-300">{{ order.item_count }} item{{ order.item_count|pluralize }}</td>
+                <td class="px-6 py-4 text-white font-medium">₹{{ order.total|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4">
+                  {% if order.status == 'delivered' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-green-500/15 text-green-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> Delivered
+                    </span>
+                  {% elif order.status == 'shipped' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-500/15 text-blue-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Shipped
+                    </span>
+                  {% elif order.status == 'processing' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-yellow-500/15 text-yellow-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> Processing
+                    </span>
+                  {% elif order.status == 'confirmed' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-500/15 text-brand-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span> Confirmed
+                    </span>
+                  {% elif order.status == 'cancelled' %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/15 text-red-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Cancelled
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-500/15 text-gray-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <a href="{% url 'store:order_detail' order.order_number %}" class="text-xs text-gray-500 hover:text-brand-400 transition">
+                    Details <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile card list -->
+        <div class="sm:hidden divide-y divide-white/5">
+          {% for order in orders %}
+          <a href="{% url 'store:order_detail' order.order_number %}" class="block px-5 py-4 hover:bg-white/[.02] transition">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-mono text-sm text-brand-400 font-medium">{{ order.order_number }}</span>
+              {% if order.status == 'delivered' %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-500/15 text-green-400">Delivered</span>
+              {% elif order.status == 'shipped' %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/15 text-blue-400">Shipped</span>
+              {% elif order.status == 'processing' %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-500/15 text-yellow-400">Processing</span>
+              {% elif order.status == 'confirmed' %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-500/15 text-brand-400">Confirmed</span>
+              {% elif order.status == 'cancelled' %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-500/15 text-red-400">Cancelled</span>
+              {% else %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-500/15 text-gray-400">Pending</span>
+              {% endif %}
+            </div>
+            <div class="flex items-center justify-between text-xs text-gray-400">
+              <span>{{ order.created_at|date:"d M Y" }} · {{ order.item_count }} item{{ order.item_count|pluralize }}</span>
+              <span class="text-white font-medium">₹{{ order.total|floatformat:0|intcomma }}</span>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Empty state -->
+        <div class="px-6 py-16 text-center">
+          <div class="w-16 h-16 mx-auto rounded-full bg-white/5 flex items-center justify-center mb-4">
+            <i class="fa-solid fa-bag-shopping text-2xl text-gray-600"></i>
+          </div>
+          <h4 class="text-white font-semibold mb-1">No Orders Yet</h4>
+          <p class="text-sm text-gray-500 mb-5">Your order history will appear here once you make a purchase.</p>
+          <a href="{% url 'store:product_list' %}"
+             class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition"
+             id="btn-start-shopping">
+            <i class="fa-solid fa-shirt"></i> Start Shopping
+          </a>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
