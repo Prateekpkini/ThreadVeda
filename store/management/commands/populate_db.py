@@ -13,24 +13,29 @@ class Command(BaseCommand):
         self.stdout.write('Populating database...')
         
         # Create superuser / default users if they don't exist
-        admin_user, _ = User.objects.get_or_create(
-            username='admin',
-            email='admin@threadveda.com',
-            is_staff=True,
-            is_superuser=True
-        )
-        admin_user.set_password('admin123')
-        admin_user.save()
+        admin_user, admin_created = User.objects.get_or_create(username='admin')
+        if admin_created:
+            admin_user.email = 'admin@threadveda.com'
+            admin_user.is_staff = True
+            admin_user.is_superuser = True
+            admin_user.set_password('admin123')
+            admin_user.save()
+        elif admin_user.email != 'admin@threadveda.com':
+            admin_user.email = 'admin@threadveda.com'
+            admin_user.save()
 
-        user1, _ = User.objects.get_or_create(username='aarav', email='aarav@gmail.com')
+        user1, _ = User.objects.get_or_create(username='aarav')
+        user1.email = 'aarav@gmail.com'
         user1.first_name = 'Aarav'
         user1.save()
 
-        user2, _ = User.objects.get_or_create(username='ananya', email='ananya@gmail.com')
+        user2, _ = User.objects.get_or_create(username='ananya')
+        user2.email = 'ananya@gmail.com'
         user2.first_name = 'Ananya'
         user2.save()
 
-        user3, _ = User.objects.get_or_create(username='vihaan', email='vihaan@gmail.com')
+        user3, _ = User.objects.get_or_create(username='vihaan')
+        user3.email = 'vihaan@gmail.com'
         user3.first_name = 'Vihaan'
         user3.save()
 
